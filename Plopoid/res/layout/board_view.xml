@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pinni_listview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:clickable="false"
+    android:divider="#00000000"
+    android:dividerHeight="0dp"
+    android:transcriptMode="alwaysScroll" >
+
+    <!-- Preview: listitem=@android:layout/simple_list_item_1 -->
+
+</ListView>

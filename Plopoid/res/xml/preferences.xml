@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/options" android:icon="@drawable/ic_menu_preferences">
+    <SwitchPreference android:persistent="true" android:title="@string/sticky_service" android:summaryOn="@string/sticky_service_enabled" android:key="service_sticky" android:defaultValue="false" android:summaryOff="@string/sticky_service_disabled" /><SwitchPreference android:summaryOn="@string/board_activated" android:summaryOff="@string/board_disable" android:key="shoop_board_enabled" android:title="@string/board_checkbox" android:persistent="true" android:defaultValue="false"/><SwitchPreference android:summaryOn="@string/board_activated" android:summaryOff="@string/board_disable" android:key="bouchot_board_enabled" android:title="@string/board_checkbox" android:persistent="true" android:defaultValue="false"/>
+    
+    
+
+</PreferenceScreen>

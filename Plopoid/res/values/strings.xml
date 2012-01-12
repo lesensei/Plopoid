@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, PinnipedeActivity!</string>
+    <string name="app_name">Plopoid</string>
+    <string name="post_button">OK</string>
+    <string name="boards">Boards</string>
+    <string name="boards_title">Boards</string>
+    <string name="board_name">Board name</string>
+    <string name="options">Options</string>
+    <string name="board_activated">This board is shown in the application and updated by the service</string>
+    <string name="board_disable">This board is neither shown in the app nor updated by the service</string>
+    <string name="board_checkbox">Enable board</string>
+    <string name="sticky_service">Sticky service</string>
+    <string name="sticky_service_enabled">When activated, the updater service will keep running even when the app is closed</string>
+    <string name="sticky_service_disabled">When disabled, the updater service will be stopped with the application</string>
+
+</resources>
