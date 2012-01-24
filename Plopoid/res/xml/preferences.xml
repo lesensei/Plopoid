@@ -1,7 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/options" android:icon="@drawable/ic_menu_preferences">
-    <SwitchPreference android:persistent="true" android:title="@string/sticky_service" android:summaryOn="@string/sticky_service_enabled" android:key="service_sticky" android:defaultValue="false" android:summaryOff="@string/sticky_service_disabled" /><SwitchPreference android:summaryOn="@string/board_activated" android:summaryOff="@string/board_disable" android:key="shoop_board_enabled" android:title="@string/board_checkbox" android:persistent="true" android:defaultValue="false"/><SwitchPreference android:summaryOn="@string/board_activated" android:summaryOff="@string/board_disable" android:key="bouchot_board_enabled" android:title="@string/board_checkbox" android:persistent="true" android:defaultValue="false"/>
-    
-    
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:icon="@drawable/ic_menu_preferences"
+    android:title="@string/options" >
+
+    <PreferenceCategory android:title="General settings" >
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="service_sticky"
+            android:persistent="true"
+            android:summaryOff="@string/sticky_service_disabled"
+            android:summaryOn="@string/sticky_service_enabled"
+            android:title="@string/sticky_service" />
+
+        <EditTextPreference
+            android:dialogTitle="@string/default_login_title"
+            android:enabled="true"
+            android:key="default_login"
+            android:persistent="true"
+            android:selectable="true"
+            android:summary="@string/default_login_summary"
+            android:title="@string/default_login_title" />
+        <EditTextPreference
+            android:dialogTitle="@string/default_password_title"
+            android:enabled="true"
+            android:inputType="textPassword"
+            android:key="default_password"
+            android:persistent="true"
+            android:selectable="true"
+            android:summary="@string/default_password_summary"
+            android:title="@string/default_password_title" />
+        <EditTextPreference
+            android:defaultValue="@string/olccs_base_uri_default"
+            android:dialogTitle="@string/olccs_base_uri_title"
+            android:enabled="true"
+            android:inputType="textUri"
+            android:key="olccs_base_uri"
+            android:persistent="true"
+            android:selectable="true"
+            android:summary="@string/olccs_base_uri_summary"
+            android:title="@string/olccs_base_uri_title" />
+        <EditTextPreference
+            android:defaultValue="@string/user_agent_default"
+            android:dialogTitle="@string/user_agent_title"
+            android:enabled="true"
+            android:key="user_agent"
+            android:persistent="true"
+            android:selectable="true"
+            android:summary="@string/user_agent_summary"
+            android:title="@string/user_agent_title" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="boards_prefs_category"
+        android:title="@string/boards" >
+    </PreferenceCategory>
 
 </PreferenceScreen>

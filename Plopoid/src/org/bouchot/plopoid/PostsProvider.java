@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -22,7 +23,7 @@ public class PostsProvider extends ContentProvider {
   private static final String DATABASE_NAME = "posts.db";
   private static final int DATABASE_VERSION = 2;
   private static HashMap<String, String> mPostsProjectionMap;
-  
+
   /*
    private static final String[] READ_POST_PROJECTION = new String[] {
     Posts._ID,
@@ -33,15 +34,15 @@ public class PostsProvider extends ContentProvider {
     Posts.COLUMN_NAME_LOGIN,
     Posts.COLUMN_NAME_MESSAGE,
   };
-  
+
   private static final int READ_POST_BOARD_INDEX = 1;
   private static final int READ_POST_ID_INDEX = 2;
   private static final int READ_POST_TIME_INDEX = 3;
   private static final int READ_POST_INFO_INDEX = 4;
   private static final int READ_POST_LOGIN_INDEX = 5;
   private static final int READ_POST_MESSAGE_INDEX = 6;
-  */
-  
+   */
+
   public static final String AUTHORITY = "org.bouchot.plopoid.postsprovider";
 
   private static final int POSTS = 1;
@@ -51,11 +52,11 @@ public class PostsProvider extends ContentProvider {
   private static final int POST__ID = 5;
   private static final int POST_BOARD_LASTID = 6;
   private static final int POST_BOARD_CLEANUP = 7;
-  
+
   private static final UriMatcher mUriMatcher;
 
   private DatabaseHelper mOpenHelper;
-  
+
   static {
     mUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     mUriMatcher.addURI(PostsProvider.AUTHORITY, Posts.PATH_POSTS, POSTS);
@@ -75,7 +76,7 @@ public class PostsProvider extends ContentProvider {
     mPostsProjectionMap.put(Posts.COLUMN_NAME_LOGIN, Posts.COLUMN_NAME_LOGIN);
     mPostsProjectionMap.put(Posts.COLUMN_NAME_MESSAGE, Posts.COLUMN_NAME_MESSAGE);
   }
-  
+
   static class DatabaseHelper extends SQLiteOpenHelper {
     DatabaseHelper(Context context) {
       super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -116,7 +117,7 @@ public class PostsProvider extends ContentProvider {
     SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
     qb.setTables(Posts.TABLE_NAME);
     int matchedUri = mUriMatcher.match(uri);
-    
+
     switch (matchedUri) {
       case POSTS:
         qb.setProjectionMap(mPostsProjectionMap);
@@ -158,9 +159,9 @@ public class PostsProvider extends ContentProvider {
     } else {
       orderBy = sortOrder;
     }
-    
+
     SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-    
+
     Cursor c = qb.query(
         db,            // The database to query
         projection,    // The columns to return from the query
@@ -170,7 +171,7 @@ public class PostsProvider extends ContentProvider {
         null,          // don't filter by row groups
         orderBy,       // The sort order
         limit);
-    
+
     c.setNotificationUri(getContext().getContentResolver(), uri);
     return c;
   }
@@ -182,12 +183,12 @@ public class PostsProvider extends ContentProvider {
       case POST_TIME:
       case POSTS_SINCE:
         return Posts.CONTENT_TYPE;
-      
+
       case POST__ID:
       case POST_ID:
       case POST_BOARD_LASTID:
         return Posts.CONTENT_ITEM_TYPE;
-        
+
       default:
         throw new IllegalArgumentException("Unknown URI "+ uri);
     }
@@ -198,11 +199,11 @@ public class PostsProvider extends ContentProvider {
     if (mUriMatcher.match(uri) != POSTS) {
       throw new IllegalArgumentException("Unknown URI " + uri);
     }
-    
+
     if (initialValues == null) {
       throw new IllegalArgumentException("No values to insert");
     }
-    
+
     if (!initialValues.containsKey(Posts.COLUMN_NAME_BOARD) ||
         !initialValues.containsKey(Posts.COLUMN_NAME_ID) ||
         !initialValues.containsKey(Posts.COLUMN_NAME_TIME) ||
@@ -211,19 +212,19 @@ public class PostsProvider extends ContentProvider {
     }
 
     ContentValues values = new ContentValues(initialValues);
-    
+
     if (!values.containsKey(Posts.COLUMN_NAME_INFO)) {
       values.put(Posts.COLUMN_NAME_INFO, "");
     }
-    
+
     if (!values.containsKey(Posts.COLUMN_NAME_LOGIN)) {
       values.put(Posts.COLUMN_NAME_LOGIN, "");
     }
-    
+
     SQLiteDatabase db = mOpenHelper.getWritableDatabase();
-    
+
     long rowId = db.insert(Posts.TABLE_NAME, null, values);
-    
+
     if (rowId > 0) {
       Uri postUri = ContentUris.withAppendedId(Posts.CONTENT__ID_URI_BASE, rowId);
       getContext().getContentResolver().notifyChange(postUri, null);
@@ -233,7 +234,68 @@ public class PostsProvider extends ContentProvider {
 
     throw new SQLException("Failed to insert row into " + uri);
   }
-  
+
+  @Override
+  public int bulkInsert(Uri uri, ContentValues[] initialValues) {
+    int len = 0;
+    for (ContentValues v : initialValues) {
+      if (v != null) {
+        len++;
+      }
+    }
+    Log.d("PostsProvider.bulkInsert()", "Called with " + len + "entries");
+    if (mUriMatcher.match(uri) != POSTS) {
+      throw new IllegalArgumentException("Unknown URI " + uri);
+    }
+
+    if (initialValues == null || initialValues.length < 1) {
+      throw new IllegalArgumentException("No values to insert");
+    }
+
+    SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+    db.beginTransaction();
+    int inserted = 0;
+
+    DatabaseUtils.InsertHelper inserter = new DatabaseUtils.InsertHelper(db, Posts.TABLE_NAME);
+
+    try {
+      for (ContentValues v : initialValues) {
+        if (v != null) {
+          if (!v.containsKey(Posts.COLUMN_NAME_BOARD) ||
+              !v.containsKey(Posts.COLUMN_NAME_ID) ||
+              !v.containsKey(Posts.COLUMN_NAME_TIME) ||
+              !v.containsKey(Posts.COLUMN_NAME_MESSAGE)) {
+            throw new IllegalArgumentException("Missing required value");
+          }
+
+          ContentValues values = new ContentValues(v);
+
+          if (!values.containsKey(Posts.COLUMN_NAME_INFO)) {
+            values.put(Posts.COLUMN_NAME_INFO, "");
+          }
+
+          if (!values.containsKey(Posts.COLUMN_NAME_LOGIN)) {
+            values.put(Posts.COLUMN_NAME_LOGIN, "");
+          }
+
+          if (inserter.insert(values) >= 0) {
+            inserted++;
+            Log.d("PostsProvider.bulkInsert()", "Inserted post " + values.getAsString(Posts.COLUMN_NAME_TIME));
+          } else {
+            throw new SQLException("Failed to insert row into " + uri);
+          }
+        }
+      }
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      inserter.close();
+    }
+
+    getContext().getContentResolver().notifyChange(PostsProvider.Posts.CONTENT_URI, null);
+    return inserted;
+  }
+
   @Override
   public int delete(Uri uri, String where, String[] whereArgs) {
     SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -300,11 +362,11 @@ public class PostsProvider extends ContentProvider {
 
       case POST__ID:
         finalWhere = Posts._ID + " = " + uri.getPathSegments().get(Posts.POST__ID_PATH_POSITION);
-        
+
         if (where != null) {
           finalWhere = finalWhere + " AND " + where;
         }
-        
+
         count = db.update(Posts.TABLE_NAME, values, finalWhere, whereArgs);
         break;
 

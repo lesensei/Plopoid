@@ -1,5 +1,6 @@
 package org.bouchot.plopoid;
 
+import android.app.Activity;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.text.Html;
@@ -10,11 +11,16 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewParent;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.SimpleCursorAdapter.ViewBinder;
 
 public class PostsBinder implements ViewBinder {
+  Activity mActivity;
+  
+  public PostsBinder (Activity activity) {
+    mActivity = activity;
+  }
+  
   private class ClockClicListener implements View.OnClickListener {
     @Override
     public void onClick(View v) {
@@ -22,7 +28,7 @@ public class PostsBinder implements ViewBinder {
       while (vp.getParent() != null) {
         vp = vp.getParent();
       }
-      TextView palmi = (TextView) ((LinearLayout) vp).findViewById(R.id.palmipede);
+      TextView palmi = (TextView) mActivity.findViewById(R.id.palmipede);
       if (!TextUtils.isEmpty(palmi.getText())) {
         palmi.append(" ");
       }

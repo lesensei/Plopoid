@@ -60,16 +60,17 @@ public class PostsUpdateService extends Service {
     private ContentValues data;
     private long lastId;
     private String[] ID_COL = { PostsProvider.Posts.COLUMN_NAME_ID };
-    private boolean dataInserted;
     private String board;
+    private ContentValues[] posts;
+    private int index;
     
     public XmlPostsHandler() {
       curTag = "";
       curContent = new StringBuffer();
-      data = new ContentValues();
       lastId = 0;
-      dataInserted = false;
       board = "";
+      posts = new ContentValues[150];
+      index = 0;
     }
     
     @Override
@@ -80,18 +81,18 @@ public class PostsUpdateService extends Service {
     @Override
     public void startDocument() throws SAXException {
       // Do nothing
-      //Log.d("XmlPostsHandler", "Posts XML parsing started.");
     }
 
     @Override
     public void endDocument() throws SAXException {
-      if (dataInserted) {
+      getContentResolver().bulkInsert(PostsProvider.Posts.CONTENT_URI, posts);
+      //TODO: Get the following to really work
+      /*if (getContentResolver().bulkInsert(PostsProvider.Posts.CONTENT_URI, posts) > 0) {
         Uri delUri = Uri.withAppendedPath(PostsProvider.Posts.CONTENT_CLEANUP_URI_BASE, data.getAsString("board"));
         int n = getContentResolver().delete(delUri, null, null);
         Log.d("PostsUpdateService", n + "posts deleted for board " + data.getAsString("board"));
-      }
+      }*/
       curLastId = lastId;
-      //Log.d("XmlPostsHandler", "Posts XML parsing finsihed.");
     }
 
     @Override
@@ -109,16 +110,15 @@ public class PostsUpdateService extends Service {
       curTag = lName;
       curContent = new StringBuffer();
       if (curTag.equals(POST_TAG)) {
-        data.clear();
+        data = new ContentValues();
         data.put("board", board);
         try {
           data.put("id", new Long(attrs.getValue("", ID_ATTR)));
         } catch (NumberFormatException nfe) {
-          Toast.makeText(getApplicationContext(), "Invalid data (NaN id) received for board"+ board, Toast.LENGTH_SHORT);
+          Toast.makeText(getApplicationContext(), "Invalid data (NaN id) received for board"+ board, Toast.LENGTH_SHORT).show();
           Log.e("XmlPostsHandler", "Invalid id data, unable to fully parse post");
         }
         data.put("time", attrs.getValue("", TIME_ATTR));
-        //Log.d("XmlPostsHandler", "Post with ID "+ attrs.getValue("", ID_ATTR) +" is being parsed");
       } else if (curTag.equals(BOARD_TAG)) {
         board = attrs.getValue("", BOARD_ATTR);
       }
@@ -143,10 +143,7 @@ public class PostsUpdateService extends Service {
           getCursor.close();
           return;
         }
-        Uri postUri = getContentResolver().insert(PostsProvider.Posts.CONTENT_URI, data);
-        if (postUri != null) {
-          dataInserted = true;
-        }
+        posts[index++] = data;
         getCursor.close();
       }
     }
@@ -168,7 +165,6 @@ public class PostsUpdateService extends Service {
 
     @Override
     public void skippedEntity(String name) throws SAXException {
-      //Log.d("XmlPostsHandler", "Entity " + name + " skipped.");
     }
   }
   
@@ -182,7 +178,7 @@ public class PostsUpdateService extends Service {
       boolean hadNewPosts = false;
       
       int count = boards.size();
-      AndroidHttpClient httpClient = AndroidHttpClient.newInstance("Plopoid/0.1");
+      AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
       try {
         for (int i = 0; i < count; i++) {
           String board = boards.get(i);
@@ -199,7 +195,8 @@ public class PostsUpdateService extends Service {
             List<NameValuePair> params = new LinkedList<NameValuePair>();
             params.add(new BasicNameValuePair("query", "id:[" + lastId + " TO *]"));
             String paramString = URLEncodedUtils.format(params, "utf-8");
-            String url = "http://zorel.org/b/" + board + "/search?" + paramString;
+            String url = preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + board + "/search?" + paramString;
+            Log.d("PostsUpdateMessageHandler", url);
             HttpResponse res = httpClient.execute(new HttpGet(url));
             Log.d("PostsUpdateMessageHandler", "Taille des données reçues: " + res.getEntity().getContentLength());
             if (res.getStatusLine().getStatusCode() >= 300) {
@@ -221,6 +218,7 @@ public class PostsUpdateService extends Service {
         }
       } catch (Exception e) {
         Log.e("PostsUpdateMessageHandler", "Unhandled error " + e.getMessage());
+        e.printStackTrace();
       } finally {
         httpClient.close();
       }

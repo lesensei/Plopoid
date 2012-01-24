@@ -8,11 +8,28 @@
     <string name="boards_title">Boards</string>
     <string name="board_name">Board name</string>
     <string name="options">Options</string>
-    <string name="board_activated">This board is shown in the application and updated by the service</string>
-    <string name="board_disable">This board is neither shown in the app nor updated by the service</string>
+    <string name="board_enabled">This board is shown in the application and updated by the service</string>
+    <string name="board_disabled">This board is neither shown in the app nor updated by the service</string>
     <string name="board_checkbox">Enable board</string>
     <string name="sticky_service">Sticky service</string>
-    <string name="sticky_service_enabled">When activated, the updater service will keep running even when the app is closed</string>
-    <string name="sticky_service_disabled">When disabled, the updater service will be stopped with the application</string>
+    <string name="sticky_service_enabled">The updater service will keep running even when the app is closed</string>
+    <string name="sticky_service_disabled">The updater service will be stopped with the application</string>
+    <string name="default_login_title">Default login</string>
+    <string name="default_password_title">Default password</string>
+    <string name="default_login_summary">This login will be used by boards that don\'t declare a specific one</string>
+    <string name="default_password_summary">This password will be used by boards that don\'t declare a specific one</string>
+    <string name="custom_login_title">Use custom login</string>
+    <string name="custom_login_enabled">This board will use the login/password provided below</string>
+    <string name="custom_login_disabled">This board will use the default login/password</string>
+    <string name="custom_login_text_title">Custom login</string>
+    <string name="custom_password_text_title">Custom password</string>
+    <string name="custom_login_summary">This login will be used by this board</string>
+    <string name="custom_password_summary">This password will be used by this board</string>
+    <string name="olccs_base_uri_title">OLCCS base URI</string>
+    <string name="olccs_base_uri_summary">Base URL at which OLCCS is listening</string>
+    <string name="olccs_base_uri_default">http://zorel.org/b/</string>
+    <string name="user_agent_title">UA string</string>
+    <string name="user_agent_summary">User-agent string (seen by web servers)</string>
+    <string name="user_agent_default">Plopoid/0.1</string>
 
 </resources>

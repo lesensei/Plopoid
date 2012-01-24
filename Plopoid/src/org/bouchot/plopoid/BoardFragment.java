@@ -34,7 +34,7 @@ public class BoardFragment extends ListFragment implements LoaderManager.LoaderC
     };
     sca = new SimpleCursorAdapter(getActivity(), R.layout.post_item,
         null, COLS, FIELDS, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-    sca.setViewBinder(new PostsBinder());
+    sca.setViewBinder(new PostsBinder(getActivity()));
     setListAdapter(sca);
 
     getLoaderManager().initLoader(0, null, this);
