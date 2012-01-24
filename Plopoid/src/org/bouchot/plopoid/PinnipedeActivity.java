@@ -38,7 +38,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class PinnipedeActivity extends Activity {
   SharedPreferences preferences;
@@ -61,6 +63,7 @@ public class PinnipedeActivity extends Activity {
     super.onCreate(savedInstanceState);
     httpContext = new BasicHttpContext();
     cookieStore = new BasicCookieStore();
+    cookieStore.clearExpired(new Date());
     httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 
     ArrayList<String> boards = new ArrayList<String>();
@@ -196,7 +199,7 @@ public class PinnipedeActivity extends Activity {
       }
       cookies.append(cookie);
     }
-    new PostMessageTask().execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
+    new PostMessageTask(this).execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
   }
 
   @Override
@@ -266,14 +269,26 @@ public class PinnipedeActivity extends Activity {
     }
   }
 
-  private class PostMessageTask extends AsyncTask<String, Void, String> {
+  private class PostMessageTask extends AsyncTask<String, Void, Boolean> {
+    Activity mActivity;
+    EditText palmi;
+    Button palmiBtn;
+    
+    public PostMessageTask (Activity activity) {
+      mActivity = activity;
+      palmi = (EditText) mActivity.findViewById(R.id.palmipede);
+      palmiBtn = (Button) mActivity.findViewById(R.id.post_button);
+    }
+	  
     @Override
     protected void onPreExecute() {
       super.onPreExecute();
+      palmi.setEnabled(false);
+      palmiBtn.setEnabled(false);
     }
 
     @Override
-    protected String doInBackground(String... args) {
+    protected Boolean doInBackground(String... args) {
       String url = args[0];
       String field = args[1];
       String message = args[2];
@@ -286,6 +301,7 @@ public class PinnipedeActivity extends Activity {
       AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
       
       boolean isLoggedIn = false;
+      boolean didPost = false;
       List<Cookie> cookies = cookieStore.getCookies();
       for (String cookieName : cookieNames) {
         for (Cookie cookie : cookies) {
@@ -323,7 +339,7 @@ public class PinnipedeActivity extends Activity {
         if (res.getStatusLine().getStatusCode() >= 400) {
           throw new IOException("HTTP error code: " + res.getStatusLine().getStatusCode());
         }
-        Log.d("PostMessageTask", "HTTP response code: " + res.getStatusLine().getStatusCode());
+        didPost = true;
       } catch (UnsupportedEncodingException e) {
         //Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
         Log.d("PostMessageTask", "Error sending message to " + url);
@@ -332,14 +348,22 @@ public class PinnipedeActivity extends Activity {
         //Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
         Log.d("PostMessageTask", "Error sending message to " + url);
         e.printStackTrace();
+      } finally {
+        httpClient.close();
       }
-      httpClient.close();
-      return null;
+      return didPost;
     }
 
     @Override
-    protected void onPostExecute(String result) {
+    protected void onPostExecute(Boolean result) {
       super.onPostExecute(result);
+      if (result) {
+        palmi.setText("");
+      } else {
+        Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
+      }
+      palmi.setEnabled(true);
+      palmiBtn.setEnabled(true);
     }
   }
   
