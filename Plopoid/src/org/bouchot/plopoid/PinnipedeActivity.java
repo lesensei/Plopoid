@@ -13,6 +13,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
@@ -233,7 +234,7 @@ public class PinnipedeActivity extends Activity {
       }
       cookies.append(cookie);
     }
-    new PostMessageTask(this).execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
+    new PostMessageTask(this, board.toString()).execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
   }
 
   @Override
@@ -307,9 +308,11 @@ public class PinnipedeActivity extends Activity {
     Activity mActivity;
     EditText palmi;
     Button palmiBtn;
+    String mBoard;
     
-    public PostMessageTask (Activity activity) {
+    public PostMessageTask (Activity activity, String board) {
       mActivity = activity;
+      mBoard = board;
       palmi = (EditText) mActivity.findViewById(R.id.palmipede);
       palmiBtn = (Button) mActivity.findViewById(R.id.post_button);
     }
@@ -393,9 +396,15 @@ public class PinnipedeActivity extends Activity {
         palmi.setText("");
         if (messengerBound) {
           try {
+            AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
+            String uri = preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/index";
+            httpClient.execute(new HttpGet(uri), httpContext);
             updateMessenger.send(Message.obtain(null, PostsUpdateService.MSG_UPDATE_AFTER_POST));
           } catch (RemoteException e) {
             Toast.makeText(mActivity, "Failed to trigger update after post", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+          } catch (IOException e) {
+            Toast.makeText(mActivity, "Failed to trigger index after post", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
           }
         }
