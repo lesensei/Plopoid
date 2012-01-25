@@ -29,6 +29,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Messenger;
 import android.os.Process;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -44,6 +45,8 @@ public class PostsUpdateService extends Service {
   ArrayList<String> boards;
   SharedPreferences preferences;
   PrefChangeListener prefsListener;
+  private Messenger updateMessenger;
+  public static final int MSG_UPDATE_AFTER_POST = 1;
   
   private final class XmlPostsHandler implements ContentHandler {
     private final String BOARD_TAG    = "board";
@@ -223,17 +226,19 @@ public class PostsUpdateService extends Service {
         httpClient.close();
       }
       
-      if (hadNewPosts) {
-        delay = 3000;
-      } else {
-        delay = Math.min(delay + 3000, 60000);
-        Log.d("PostsUpdateMessageHandler", "Delay increased to " + delay + "ms");
+      if (msg.what != MSG_UPDATE_AFTER_POST) {
+        if (hadNewPosts) {
+          delay = 3000;
+        } else {
+          delay = Math.min(delay + 3000, 60000);
+          Log.d("PostsUpdateMessageHandler", "Delay increased to " + delay + "ms");
+        }
+        Message newMsg = this.obtainMessage();
+        newMsg.arg1 = msg.arg1;
+        newMsg.obj = boards;
+        if (!destroyCalled) {
+          this.sendMessageDelayed(newMsg, delay);
       }
-      Message newMsg = this.obtainMessage();
-      newMsg.arg1 = msg.arg1;
-      newMsg.obj = boards;
-      if (!destroyCalled) {
-        this.sendMessageDelayed(newMsg, delay);
       }
     }
   }
@@ -268,6 +273,7 @@ public class PostsUpdateService extends Service {
     
     mServiceLooper = thread.getLooper();
     mServiceHandler = new ServiceHandler(mServiceLooper);
+    updateMessenger = new Messenger(mServiceHandler);
     
     boards = new ArrayList<String>();
     preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -301,7 +307,6 @@ public class PostsUpdateService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    //No binding
-    return null;
+    return updateMessenger.getBinder();
   }
 }

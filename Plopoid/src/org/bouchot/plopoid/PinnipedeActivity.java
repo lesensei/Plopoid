@@ -26,11 +26,18 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.ActionBar.Tab;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.util.Log;
@@ -46,15 +53,45 @@ public class PinnipedeActivity extends Activity {
   SharedPreferences preferences;
   HttpContext httpContext;
   CookieStore cookieStore;
+  Messenger updateMessenger = null;
+  boolean messengerBound;
+  
+  private ServiceConnection updateConn = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName className, IBinder service) {
+      updateMessenger = new Messenger(service);
+      messengerBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName className) {
+      updateMessenger = null;
+      messengerBound = false;
+    }
+  };
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    //preferences.unregisterOnSharedPreferenceChangeListener(prefsListener);
     if (!preferences.getBoolean("service_sticky", false)) {
       Intent updatePosts = new Intent(this, PostsUpdateService.class);
       stopService(updatePosts);
       Log.d("PinnipedeActivity", "Stopped updater service");
+    }
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+    bindService(new Intent(this, PostsUpdateService.class), updateConn, Context.BIND_NOT_FOREGROUND);
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+    if (messengerBound) {
+      unbindService(updateConn);
+      messengerBound = false;
     }
   }
 
@@ -68,7 +105,6 @@ public class PinnipedeActivity extends Activity {
 
     ArrayList<String> boards = new ArrayList<String>();
     preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    //prefsListener = new PrefChangeListener(this);
     Map<String, ?> prefs = preferences.getAll();
     for(Map.Entry<String, ?> pref : prefs.entrySet()) {
       String k = pref.getKey();
@@ -91,8 +127,6 @@ public class PinnipedeActivity extends Activity {
     }
 
     setContentView(R.layout.main);
-
-    //preferences.registerOnSharedPreferenceChangeListener(prefsListener);
 
     if (savedInstanceState != null) {
       String activeBoard = savedInstanceState.getString("tab");
@@ -341,11 +375,9 @@ public class PinnipedeActivity extends Activity {
         }
         didPost = true;
       } catch (UnsupportedEncodingException e) {
-        //Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
         Log.d("PostMessageTask", "Error sending message to " + url);
         e.printStackTrace();
       } catch (IOException e) {
-        //Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
         Log.d("PostMessageTask", "Error sending message to " + url);
         e.printStackTrace();
       } finally {
@@ -359,6 +391,14 @@ public class PinnipedeActivity extends Activity {
       super.onPostExecute(result);
       if (result) {
         palmi.setText("");
+        if (messengerBound) {
+          try {
+            updateMessenger.send(Message.obtain(null, PostsUpdateService.MSG_UPDATE_AFTER_POST));
+          } catch (RemoteException e) {
+            Toast.makeText(mActivity, "Failed to trigger update after post", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+          }
+        }
       } else {
         Toast.makeText(getApplicationContext(), "Error sending message", Toast.LENGTH_SHORT).show();
       }

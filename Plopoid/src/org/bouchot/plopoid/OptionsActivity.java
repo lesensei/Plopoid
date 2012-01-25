@@ -185,7 +185,6 @@ public class OptionsActivity extends PreferenceActivity {
       try {
         res = httpClient.execute(new HttpGet(url[0]));
       } catch (IOException e) {
-        Toast.makeText(getApplicationContext(), "Error while retrieving boards configuration data.", Toast.LENGTH_LONG).show();
         e.printStackTrace();
         httpClient.close();
         return null;

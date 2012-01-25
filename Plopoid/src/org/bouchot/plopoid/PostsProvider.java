@@ -237,13 +237,6 @@ public class PostsProvider extends ContentProvider {
 
   @Override
   public int bulkInsert(Uri uri, ContentValues[] initialValues) {
-    int len = 0;
-    for (ContentValues v : initialValues) {
-      if (v != null) {
-        len++;
-      }
-    }
-    Log.d("PostsProvider.bulkInsert()", "Called with " + len + "entries");
     if (mUriMatcher.match(uri) != POSTS) {
       throw new IllegalArgumentException("Unknown URI " + uri);
     }
@@ -280,7 +273,6 @@ public class PostsProvider extends ContentProvider {
 
           if (inserter.insert(values) >= 0) {
             inserted++;
-            Log.d("PostsProvider.bulkInsert()", "Inserted post " + values.getAsString(Posts.COLUMN_NAME_TIME));
           } else {
             throw new SQLException("Failed to insert row into " + uri);
           }

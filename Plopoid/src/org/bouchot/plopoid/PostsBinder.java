@@ -1,6 +1,7 @@
 package org.bouchot.plopoid;
 
 import android.app.Activity;
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.text.Html;
@@ -9,6 +10,7 @@ import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.view.inputmethod.InputMethodManager;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.TextView;
@@ -33,6 +35,7 @@ public class PostsBinder implements ViewBinder {
         palmi.append(" ");
       }
       palmi.append(((TextView) v).getText() + " ");
+      ((InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(palmi, 0);
     }
   }
   
