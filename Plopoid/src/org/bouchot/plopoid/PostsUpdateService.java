@@ -85,16 +85,26 @@ public class PostsUpdateService extends Service {
     public void startDocument() throws SAXException {
       // Do nothing
     }
+    
+    private void cleanupBoard(String board) {
+      Uri lastIdUri = Uri.withAppendedPath(PostsProvider.Posts.CONTENT_LASTID_URI_BASE, board);
+      String[] columns = {PostsProvider.Posts.COLUMN_NAME_ID};
+      Cursor c = getContentResolver().query(lastIdUri, columns, null, null, null);
+      long lastId = 0;
+      if (c.moveToFirst()) {
+        lastId = c.getLong(0) - 150;
+      }
+      String[] args = { board, "" + lastId };
+      int deleted = getContentResolver().delete(PostsProvider.Posts.CONTENT_URI, PostsProvider.Posts.COLUMN_NAME_BOARD + " = ? AND " + PostsProvider.Posts.COLUMN_NAME_ID + " < ?", args);
+      c.close();
+      Log.d("PostsUpdateService", deleted + " posts deleted for board " + data.getAsString("board"));
+      return;
+    }
 
     @Override
     public void endDocument() throws SAXException {
       getContentResolver().bulkInsert(PostsProvider.Posts.CONTENT_URI, posts);
-      //TODO: Get the following to really work
-      /*if (getContentResolver().bulkInsert(PostsProvider.Posts.CONTENT_URI, posts) > 0) {
-        Uri delUri = Uri.withAppendedPath(PostsProvider.Posts.CONTENT_CLEANUP_URI_BASE, data.getAsString("board"));
-        int n = getContentResolver().delete(delUri, null, null);
-        Log.d("PostsUpdateService", n + "posts deleted for board " + data.getAsString("board"));
-      }*/
+      cleanupBoard(data.getAsString("board"));
       curLastId = lastId;
     }
 
