@@ -22,6 +22,7 @@ On notera que la récupération des posts se fait dans un service, ce qui a peu 
 D'abord, de faire en sorte que ça juste marche.
 
 Ensuite, et pas dans l'ordre:
+
 * Possibilité de poster en anonyme
 * Une compatibilité à partir d'Android 2.1 ?
 * Les notifications (bigornophone)
