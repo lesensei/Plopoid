@@ -13,7 +13,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
@@ -207,16 +206,11 @@ public class PinnipedeActivity extends Activity {
 
   public void palmipedePost(View v) {
     CharSequence board = getActionBar().getSelectedTab().getText();
-    String url = preferences.getString(board + "_post_url", null);
-    String messageField = preferences.getString(board + "_post_field", null);
     Editable messageData = ((EditText) findViewById(R.id.palmipede)).getText();
     if (messageData.length() == 0) {
       return;
     }
     String message = ((CharSequence) messageData).toString();
-    String login = preferences.getString(board + "_login_url", null);
-    String usernameField = preferences.getString(board + "_login_username_field", null);
-    String passwordField = preferences.getString(board + "_login_password_field", null);
     String username;
     String password;
     if (preferences.getBoolean(board + "_custom_login", false)) {
@@ -234,7 +228,7 @@ public class PinnipedeActivity extends Activity {
       }
       cookies.append(cookie);
     }
-    new PostMessageTask(this, board.toString()).execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
+    new PostMessageTask(this, board.toString()).execute(message, username, password, cookies.toString());
   }
 
   @Override
@@ -326,15 +320,10 @@ public class PinnipedeActivity extends Activity {
 
     @Override
     protected Boolean doInBackground(String... args) {
-      String url = args[0];
-      String field = args[1];
-      String message = args[2];
-      String login = args[3];
-      String usernameField = args[4];
-      String passwordField = args[5];
-      String username = args[6];
-      String password = args[7];
-      String[] cookieNames = args[8].split(";");
+      String message = args[0];
+      String username = args[1];
+      String password = args[2];
+      String[] cookieNames = args[3].split(";");
       AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
       
       boolean isLoggedIn = false;
@@ -348,10 +337,10 @@ public class PinnipedeActivity extends Activity {
         }
       }
       if (!isLoggedIn) {
-        HttpPost httpLogin = new HttpPost(login);
+        HttpPost httpLogin = new HttpPost(preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/login");
         List<NameValuePair> loginParams = new LinkedList<NameValuePair>();
-        loginParams.add(new BasicNameValuePair(usernameField, username));
-        loginParams.add(new BasicNameValuePair(passwordField, password));
+        loginParams.add(new BasicNameValuePair("user", username));
+        loginParams.add(new BasicNameValuePair("password", password));
         try {
           httpLogin.setEntity(new UrlEncodedFormEntity(loginParams, "UTF-8"));
           HttpResponse res = httpClient.execute(httpLogin, httpContext);
@@ -359,17 +348,17 @@ public class PinnipedeActivity extends Activity {
             throw new IOException("HTTP error code: " + res.getStatusLine().getStatusCode());
           }
         } catch (UnsupportedEncodingException e) {
-          Log.d("PostMessageTask", "Error logging in to " + login);
+          Log.d("PostMessageTask", "Error logging in to " + mBoard);
           e.printStackTrace();
         } catch (IOException e) {
-          Log.d("PostMessageTask", "Error logging in to " + login);
+          Log.d("PostMessageTask", "Error logging in to " + mBoard);
           e.printStackTrace();
         }
       }
       
-      HttpPost httpPost = new HttpPost(url);
+      HttpPost httpPost = new HttpPost(preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/post");
       List<NameValuePair> params = new LinkedList<NameValuePair>();
-      params.add(new BasicNameValuePair(field, message));
+      params.add(new BasicNameValuePair("message", message));
       try {
         httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
         HttpResponse res = httpClient.execute(httpPost, httpContext);
@@ -378,10 +367,10 @@ public class PinnipedeActivity extends Activity {
         }
         didPost = true;
       } catch (UnsupportedEncodingException e) {
-        Log.d("PostMessageTask", "Error sending message to " + url);
+        Log.d("PostMessageTask", "Error sending message to " + mBoard);
         e.printStackTrace();
       } catch (IOException e) {
-        Log.d("PostMessageTask", "Error sending message to " + url);
+        Log.d("PostMessageTask", "Error sending message to " + mBoard);
         e.printStackTrace();
       } finally {
         httpClient.close();
@@ -396,15 +385,9 @@ public class PinnipedeActivity extends Activity {
         palmi.setText("");
         if (messengerBound) {
           try {
-            AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
-            String uri = preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/index";
-            httpClient.execute(new HttpGet(uri), httpContext);
             updateMessenger.send(Message.obtain(null, PostsUpdateService.MSG_UPDATE_AFTER_POST));
           } catch (RemoteException e) {
             Toast.makeText(mActivity, "Failed to trigger update after post", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-          } catch (IOException e) {
-            Toast.makeText(mActivity, "Failed to trigger index after post", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
           }
         }

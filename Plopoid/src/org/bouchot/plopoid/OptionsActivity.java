@@ -40,16 +40,8 @@ public class OptionsActivity extends PreferenceActivity {
   
   private class XmlBoardsHandler implements ContentHandler {
     private static final String SITE_TAG = "site";
-    //private static final String MODULE_TAG = "module";
-    private static final String POST_TAG = "post";
-    private static final String FIELD_TAG = "field";
-    private static final String LOGIN_TAG = "login";
-    private static final String USERNAME_TAG = "username";
-    private static final String PASSWORD_TAG = "password";
-    private static final String COOKIE_TAG = "cookie";
     private static final String NAME_ATTR = "name";
-    //private static final String METHOD_ATTR = "method";
-    private static final String PATH_ATTR = "path";
+    private static final String COOKIE_TAG = "cookie";
     
     private String board;
     private Editor prefsEdit;
@@ -129,16 +121,6 @@ public class OptionsActivity extends PreferenceActivity {
         passwordPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         boardScreen.addPreference(passwordPref);
         boardsPrefs.addPreference(boardScreen);
-      } else if (mFirst && lName.equals(POST_TAG)) {
-        prefsEdit.putString(board + "_post_url", attrs.getValue("", PATH_ATTR));
-      } else if (mFirst && lName.equals(FIELD_TAG)) {
-        prefsEdit.putString(board + "_post_field", attrs.getValue("", NAME_ATTR));
-      } else if (mFirst && lName.equals(LOGIN_TAG)) {
-        prefsEdit.putString(board + "_login_url", attrs.getValue("", PATH_ATTR));
-      } else if (mFirst && lName.equals(USERNAME_TAG)) {
-        prefsEdit.putString(board + "_login_username_field", attrs.getValue("", NAME_ATTR));
-      } else if (mFirst && lName.equals(PASSWORD_TAG)) {
-        prefsEdit.putString(board + "_login_password_field", attrs.getValue("", NAME_ATTR));
       } else if (mFirst && lName.equals(COOKIE_TAG)) {
         Set<String> cookies = (Set<String>) getPreferenceManager().getSharedPreferences().getStringSet(board + "_login_cookie_name", new TreeSet<String>());
         cookies.add(attrs.getValue("", NAME_ATTR));
