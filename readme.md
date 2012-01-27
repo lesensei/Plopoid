@@ -1,34 +1,34 @@
 # Plopoid est un coincoin
 
-Ben oui, Plopoid, c'est un coincoin, soit un truc qui permet de partager des "coins ?", "pan !" et autres messages antipapistes sur les tribunes de par le web. Sa particularité, c'est d'être écrit pour Android.
+Ben oui, Plopoid, c'est un coincoin, soit un truc qui permet de partager des "coins ?", "pan !" et autres messages antipapistes sur les tribunes de par le web. Sa particularitÃ©, c'est d'Ãªtre Ã©crit pour Android.
 
-## Limitations & Fonctionnalités (un peu)
+## Limitations & FonctionnalitÃ©s (un peu)
 
-* Ne fonctionne pour l'instant que sous ICS (peut-être sous Honeycomb, pas testé)
+* Ne fonctionne pour l'instant que sous ICS (peut-Ãªtre sous Honeycomb, pas testÃ©)
 * Ne permet pas les posts anonymes
-* Pas encore de gestion des horloges (pas de highlight des posts auxquels un post donné répond)
+* Pas encore de gestion des horloges (pas de highlight des posts auxquels un post donnÃ© rÃ©pond)
 * Pour le reste, c'est du classique:
   * Affichage des tribunes par onglet
-  * Un "clic" sur l'horloge d'un post l'ajoute à la fin du palmipède
+  * Un "clic" sur l'horloge d'un post l'ajoute Ã  la fin du palmipÃ¨de
 
-## Ça fonctionne comment ?
+## Ã‡a fonctionne comment ?
 
-Plopoid exécute toutes ses requêtes sur un serveur olccs.
+Plopoid exÃ©cute toutes ses requÃªtes sur un serveur olccs.
 
-On notera que la récupération des posts se fait dans un service, ce qui a peu de valeur ajoutée actuellement (et donc on aura tendance à stopper le service à la sortie), mais qui permettra plus tard d'avoir un bigorno-like.
+On notera que la rÃ©cupÃ©ration des posts se fait dans un service, ce qui a peu de valeur ajoutÃ©e actuellement (et donc on aura tendance Ã  stopper le service Ã  la sortie), mais qui permettra plus tard d'avoir un bigorno-like.
 
-## Alors oui, justement, c'est quoi les futures étapes
+## Alors oui, justement, c'est quoi les futures Ã©tapes
 
-D'abord, de faire en sorte que ça juste marche.
+D'abord, de faire en sorte que Ã§a juste marche.
 
 Ensuite, et pas dans l'ordre:
-* Possibilité de poster en anonyme
-* Une compatibilité à partir d'Android 2.1 ?
+* PossibilitÃ© de poster en anonyme
+* Une compatibilitÃ© Ã  partir d'Android 2.1 ?
 * Les notifications (bigornophone)
-* La colorisation des posts (de l'utilisateur, des réponses à l'utilisateur, etc.)
-* Le highlight des posts auxquels un post donné répond
+* La colorisation des posts (de l'utilisateur, des rÃ©ponses Ã  l'utilisateur, etc.)
+* Le highlight des posts auxquels un post donnÃ© rÃ©pond
 * Une traduction des quelques bouts de texte, puisque c'est avant tout une appli pour francophones (mais je voulais tester l'internationalisation sur Android)
 
-## Ça se chope où ?
+## Ã‡a se chope oÃ¹ ?
 
-Pas sur le market en tout cas. Il y a une page de téléchargement sur le wiki, pour les glandeurs qui veulent pas compiler (et donc pas contribuer, hein, bande de profiteurs !)
+Pas sur le market en tout cas. Il y a une page de tÃ©lÃ©chargement sur le wiki, pour les glandeurs qui veulent pas compiler (et donc pas contribuer, hein, bande de profiteurs !)
