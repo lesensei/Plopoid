@@ -28,7 +28,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
+import android.preference.CheckBoxPreference;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Xml;
@@ -40,16 +40,8 @@ public class OptionsActivity extends PreferenceActivity {
   
   private class XmlBoardsHandler implements ContentHandler {
     private static final String SITE_TAG = "site";
-    //private static final String MODULE_TAG = "module";
-    private static final String POST_TAG = "post";
-    private static final String FIELD_TAG = "field";
-    private static final String LOGIN_TAG = "login";
-    private static final String USERNAME_TAG = "username";
-    private static final String PASSWORD_TAG = "password";
     private static final String COOKIE_TAG = "cookie";
     private static final String NAME_ATTR = "name";
-    //private static final String METHOD_ATTR = "method";
-    private static final String PATH_ATTR = "path";
     
     private String board;
     private Editor prefsEdit;
@@ -76,7 +68,7 @@ public class OptionsActivity extends PreferenceActivity {
 
     @Override
     public void endDocument() throws SAXException {
-      prefsEdit.apply();
+      prefsEdit.commit();
     }
     
     @Override
@@ -95,7 +87,7 @@ public class OptionsActivity extends PreferenceActivity {
         board = attrs.getValue("", NAME_ATTR);
         PreferenceScreen boardScreen = getPreferenceManager().createPreferenceScreen(mActivity);
         boardScreen.setTitle(board);
-        SwitchPreference boardEnable = new SwitchPreference(mActivity);
+        CheckBoxPreference boardEnable = new CheckBoxPreference(mActivity);
         boardEnable.setKey(board + "_board_enabled");
         boardEnable.setTitle(R.string.board_checkbox);
         boardEnable.setPersistent(true);
@@ -103,7 +95,7 @@ public class OptionsActivity extends PreferenceActivity {
         boardEnable.setSummaryOn(R.string.board_enabled);
         boardEnable.setSummaryOff(R.string.board_disabled);
         boardScreen.addPreference(boardEnable);
-        SwitchPreference customLogin = new SwitchPreference(mActivity);
+        CheckBoxPreference customLogin = new CheckBoxPreference(mActivity);
         customLogin.setKey(board + "_custom_login");
         customLogin.setTitle(R.string.custom_login_title);
         customLogin.setPersistent(true);
@@ -129,20 +121,10 @@ public class OptionsActivity extends PreferenceActivity {
         passwordPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         boardScreen.addPreference(passwordPref);
         boardsPrefs.addPreference(boardScreen);
-      } else if (mFirst && lName.equals(POST_TAG)) {
-        prefsEdit.putString(board + "_post_url", attrs.getValue("", PATH_ATTR));
-      } else if (mFirst && lName.equals(FIELD_TAG)) {
-        prefsEdit.putString(board + "_post_field", attrs.getValue("", NAME_ATTR));
-      } else if (mFirst && lName.equals(LOGIN_TAG)) {
-        prefsEdit.putString(board + "_login_url", attrs.getValue("", PATH_ATTR));
-      } else if (mFirst && lName.equals(USERNAME_TAG)) {
-        prefsEdit.putString(board + "_login_username_field", attrs.getValue("", NAME_ATTR));
-      } else if (mFirst && lName.equals(PASSWORD_TAG)) {
-        prefsEdit.putString(board + "_login_password_field", attrs.getValue("", NAME_ATTR));
       } else if (mFirst && lName.equals(COOKIE_TAG)) {
-        Set<String> cookies = (Set<String>) getPreferenceManager().getSharedPreferences().getStringSet(board + "_login_cookie_name", new TreeSet<String>());
-        cookies.add(attrs.getValue("", NAME_ATTR));
-        prefsEdit.putStringSet(board + "_login_cookie_name", cookies);
+        String oldCookies = getPreferenceManager().getSharedPreferences().getString(board + "_login_cookie_name", "");
+        String newCookies = (oldCookies.equals("") ? "" : oldCookies + ";") + attrs.getValue("", NAME_ATTR);
+        prefsEdit.putString(board + "_login_cookie_name", newCookies);
       }
     }
 

@@ -4,7 +4,7 @@
     android:title="@string/options" >
 
     <PreferenceCategory android:title="General settings" >
-        <SwitchPreference
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="service_sticky"
             android:persistent="true"

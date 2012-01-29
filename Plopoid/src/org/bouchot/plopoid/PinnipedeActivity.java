@@ -22,11 +22,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
-import android.app.ActionBar.Tab;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -40,20 +36,33 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TabHost;
+import android.widget.TabWidget;
+import android.widget.TabHost.TabSpec;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class PinnipedeActivity extends Activity {
+public class PinnipedeActivity extends FragmentActivity {
   SharedPreferences preferences;
   HttpContext httpContext;
   CookieStore cookieStore;
+  TabHost mTabHost;
+  ViewPager mViewPager;
+  TabsAdapter mTabsAdapter;
   Messenger updateMessenger = null;
   boolean messengerBound;
   
@@ -116,28 +125,27 @@ public class PinnipedeActivity extends Activity {
       }
     }
 
-    final ActionBar bar = getActionBar();
-    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-    bar.setDisplayShowTitleEnabled(false);
-
-    for (String b : boards) {
-      bar.addTab(bar.newTab()
-          .setText(b)
-          .setTabListener(new TabListener<BoardFragment>(
-              this, b, BoardFragment.class)));
-    }
-
     setContentView(R.layout.main);
 
+    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+
+    mViewPager = (ViewPager)findViewById(R.id.pager);
+
+    mTabsAdapter = new TabsAdapter(this, mTabHost, mViewPager);
+
+    for (String b : boards) {
+      Bundle args = new Bundle();
+      args.putString("board", b);
+      mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b),
+              BoardFragment.class, args);
+    }
+    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = 35;
+    }
+
     if (savedInstanceState != null) {
-      String activeBoard = savedInstanceState.getString("tab");
-      if (activeBoard != null) {
-        for (int i = 0; i < bar.getNavigationItemCount(); i++) {
-          if (((String) bar.getTabAt(i).getText()).equals(activeBoard)) {
-            bar.setSelectedNavigationItem(i);
-          }
-        }
-      }
+      mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
     }
 
     Intent updatePosts = new Intent(this, PostsUpdateService.class);
@@ -161,14 +169,11 @@ public class PinnipedeActivity extends Activity {
       }
     }
 
-    final ActionBar bar = getActionBar();
-
     for (String b : boards) {
       int after = -1;
       boolean addIt = true;
-      for (int i = 0; i < bar.getTabCount(); i++) {
-        Tab tab = bar.getTabAt(i);
-        String title = (String) tab.getText();
+      for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+        String title = (String) ((TextView) mTabHost.getTabWidget().getChildTabViewAt(i).findViewById(android.R.id.title)).getText();
         if (title.compareTo(b) < 0) {
           after = i;
         }
@@ -177,16 +182,18 @@ public class PinnipedeActivity extends Activity {
         }
       }
       if (addIt) {
-        bar.addTab(bar.newTab()
-            .setText(b)
-            .setTabListener(new TabListener<BoardFragment>(
-                this, b, BoardFragment.class)), after + 1);
+        Bundle args = new Bundle();
+        args.putString("board", b);
+        mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
       }
     }
+    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
+    }
 
-    for (int i = 0; i < bar.getTabCount(); i++) {
-      if (!boards.contains((String) bar.getTabAt(i).getText())) {
-        bar.removeTabAt(i);
+    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+      if (!boards.contains((String) ((TextView) mTabHost.getTabWidget().getChildTabViewAt(i).findViewById(android.R.id.title)).getText())) {
+        mTabHost.getTabWidget().removeView(mTabHost.getTabWidget().getChildTabViewAt(i));
       }
     }
   }
@@ -199,24 +206,16 @@ public class PinnipedeActivity extends Activity {
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    Tab mTab =getActionBar().getSelectedTab(); 
-    if (mTab != null) {
-      outState.putString("tab", (String) mTab.getText());
-    }
+    outState.putString("tab", mTabHost.getCurrentTabTag());
   }
 
   public void palmipedePost(View v) {
-    CharSequence board = getActionBar().getSelectedTab().getText();
-    String url = preferences.getString(board + "_post_url", null);
-    String messageField = preferences.getString(board + "_post_field", null);
+    CharSequence board = mTabHost.getCurrentTabTag();
     Editable messageData = ((EditText) findViewById(R.id.palmipede)).getText();
     if (messageData.length() == 0) {
       return;
     }
     String message = ((CharSequence) messageData).toString();
-    String login = preferences.getString(board + "_login_url", null);
-    String usernameField = preferences.getString(board + "_login_username_field", null);
-    String passwordField = preferences.getString(board + "_login_password_field", null);
     String username;
     String password;
     if (preferences.getBoolean(board + "_custom_login", false)) {
@@ -226,15 +225,8 @@ public class PinnipedeActivity extends Activity {
       username = preferences.getString("default_login", null);
       password = preferences.getString("default_password", null);
     }
-    Set<String> cookieNames = preferences.getStringSet(board + "_login_cookie_name", null);
-    StringBuffer cookies = new StringBuffer();
-    for (String cookie : cookieNames) {
-      if (cookies.length() > 0) {
-        cookies.append(';');
-      }
-      cookies.append(cookie);
-    }
-    new PostMessageTask(this, board.toString()).execute(url, messageField, message, login, usernameField, passwordField, username, password, cookies.toString());
+    String cookies = preferences.getString(board + "_login_cookie_name", "");
+    new PostMessageTask(this, board.toString()).execute(message, username, password, cookies);
   }
 
   @Override
@@ -254,54 +246,6 @@ public class PinnipedeActivity extends Activity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_menu, menu);
     return super.onCreateOptionsMenu(menu);
-  }
-
-  public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
-    private final Activity mActivity;
-    private final String mTag;
-    private final Class<T> mClass;
-    private final Bundle mArgs;
-    private Fragment mFragment;
-
-    public TabListener(Activity activity, String tag, Class<T> clz) {
-      this(activity, tag, clz, null);
-    }
-
-    public TabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
-      mActivity = activity;
-      mTag = tag;
-      mClass = clz;
-      mArgs = args;
-
-      // Check to see if we already have a fragment for this tab, probably
-      // from a previously saved state.  If so, deactivate it, because our
-      // initial state is that a tab isn't shown.
-      mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
-      if (mFragment != null && !mFragment.isDetached()) {
-        FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
-        ft.detach(mFragment);
-        ft.commit();
-      }
-    }
-
-    public void onTabSelected(Tab tab, FragmentTransaction ft) {
-      if (mFragment == null) {
-        mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
-        ft.add(R.id.pinni_container, mFragment, mTag);
-      } else {
-        ft.attach(mFragment);
-      }
-    }
-
-    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-      if (mFragment != null) {
-        ft.detach(mFragment);
-      }
-    }
-
-    public void onTabReselected(Tab tab, FragmentTransaction ft) {
-      //Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
-    }
   }
 
   private class PostMessageTask extends AsyncTask<String, Void, Boolean> {
@@ -326,15 +270,10 @@ public class PinnipedeActivity extends Activity {
 
     @Override
     protected Boolean doInBackground(String... args) {
-      String url = args[0];
-      String field = args[1];
-      String message = args[2];
-      String login = args[3];
-      String usernameField = args[4];
-      String passwordField = args[5];
-      String username = args[6];
-      String password = args[7];
-      String[] cookieNames = args[8].split(";");
+      String message = args[0];
+      String username = args[1];
+      String password = args[2];
+      String[] cookieNames = args[3].split(";");
       AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
       
       boolean isLoggedIn = false;
@@ -348,10 +287,10 @@ public class PinnipedeActivity extends Activity {
         }
       }
       if (!isLoggedIn) {
-        HttpPost httpLogin = new HttpPost(login);
+        HttpPost httpLogin = new HttpPost(preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/login");
         List<NameValuePair> loginParams = new LinkedList<NameValuePair>();
-        loginParams.add(new BasicNameValuePair(usernameField, username));
-        loginParams.add(new BasicNameValuePair(passwordField, password));
+        loginParams.add(new BasicNameValuePair("user", username));
+        loginParams.add(new BasicNameValuePair("password", password));
         try {
           httpLogin.setEntity(new UrlEncodedFormEntity(loginParams, "UTF-8"));
           HttpResponse res = httpClient.execute(httpLogin, httpContext);
@@ -359,17 +298,17 @@ public class PinnipedeActivity extends Activity {
             throw new IOException("HTTP error code: " + res.getStatusLine().getStatusCode());
           }
         } catch (UnsupportedEncodingException e) {
-          Log.d("PostMessageTask", "Error logging in to " + login);
+          Log.d("PostMessageTask", "Error logging in to " + mBoard);
           e.printStackTrace();
         } catch (IOException e) {
-          Log.d("PostMessageTask", "Error logging in to " + login);
+          Log.d("PostMessageTask", "Error logging in to " + mBoard);
           e.printStackTrace();
         }
       }
       
-      HttpPost httpPost = new HttpPost(url);
+      HttpPost httpPost = new HttpPost(preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/post");
       List<NameValuePair> params = new LinkedList<NameValuePair>();
-      params.add(new BasicNameValuePair(field, message));
+      params.add(new BasicNameValuePair("message", message));
       try {
         httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
         HttpResponse res = httpClient.execute(httpPost, httpContext);
@@ -378,10 +317,10 @@ public class PinnipedeActivity extends Activity {
         }
         didPost = true;
       } catch (UnsupportedEncodingException e) {
-        Log.d("PostMessageTask", "Error sending message to " + url);
+        Log.d("PostMessageTask", "Error sending message to " + mBoard);
         e.printStackTrace();
       } catch (IOException e) {
-        Log.d("PostMessageTask", "Error sending message to " + url);
+        Log.d("PostMessageTask", "Error sending message to " + mBoard);
         e.printStackTrace();
       } finally {
         httpClient.close();
@@ -396,15 +335,9 @@ public class PinnipedeActivity extends Activity {
         palmi.setText("");
         if (messengerBound) {
           try {
-            AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
-            String uri = preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + mBoard + "/index";
-            httpClient.execute(new HttpGet(uri), httpContext);
             updateMessenger.send(Message.obtain(null, PostsUpdateService.MSG_UPDATE_AFTER_POST));
           } catch (RemoteException e) {
             Toast.makeText(mActivity, "Failed to trigger update after post", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-          } catch (IOException e) {
-            Toast.makeText(mActivity, "Failed to trigger index after post", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
           }
         }
@@ -415,5 +348,99 @@ public class PinnipedeActivity extends Activity {
       palmiBtn.setEnabled(true);
     }
   }
-  
+
+  public static class TabsAdapter extends FragmentPagerAdapter
+  implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener {
+    private final Context mContext;
+    private final TabHost mTabHost;
+    private final ViewPager mViewPager;
+    private final ArrayList<TabInfo> mTabs = new ArrayList<TabInfo>();
+
+    static final class TabInfo {
+      private final String tag;
+      private final Class<?> clss;
+      private final Bundle args;
+
+      TabInfo(String _tag, Class<?> _class, Bundle _args) {
+        tag = _tag;
+        clss = _class;
+        args = _args;
+      }
+    }
+
+    static class DummyTabFactory implements TabHost.TabContentFactory {
+      private final Context mContext;
+
+      public DummyTabFactory(Context context) {
+        mContext = context;
+      }
+
+      @Override
+      public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+      }
+    }
+
+    public TabsAdapter(FragmentActivity activity, TabHost tabHost, ViewPager pager) {
+      super(activity.getSupportFragmentManager());
+      mContext = activity;
+      mTabHost = tabHost;
+      mViewPager = pager;
+      mTabHost.setOnTabChangedListener(this);
+      mViewPager.setAdapter(this);
+      mViewPager.setOnPageChangeListener(this);
+    }
+
+    public void addTab(TabSpec tabSpec, Class<BoardFragment> board, Bundle args) {
+      tabSpec.setContent(new DummyTabFactory(mContext));
+      String tag = tabSpec.getTag();
+
+      TabInfo info = new TabInfo(tag, board, args);
+      mTabs.add(info);
+      mTabHost.addTab(tabSpec);
+      notifyDataSetChanged();
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+      TabInfo info = mTabs.get(position);
+      return Fragment.instantiate(mContext, info.clss.getName(), info.args);
+    }
+
+    @Override
+    public int getCount() {
+      return mTabs.size();
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int position) {
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+      // Unfortunately when TabHost changes the current tab, it kindly
+      // also takes care of putting focus on it when not in touch mode.
+      // The jerk.
+      // This hack tries to prevent this from pulling focus out of our
+      // ViewPager.
+      TabWidget widget = mTabHost.getTabWidget();
+      int oldFocusability = widget.getDescendantFocusability();
+      widget.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+      mTabHost.setCurrentTab(position);
+      widget.setDescendantFocusability(oldFocusability);
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+      int position = mTabHost.getCurrentTab();
+      mViewPager.setCurrentItem(position);
+    }
+  }
 }
