@@ -43,6 +43,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -50,6 +51,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TabHost.TabSpec;
@@ -65,6 +67,8 @@ public class PinnipedeActivity extends FragmentActivity {
   TabsAdapter mTabsAdapter;
   Messenger updateMessenger = null;
   boolean messengerBound;
+  private final static int TAB_HEIGHT = 30;
+  private final static int TAB_WIDTH = 100;
   
   private ServiceConnection updateConn = new ServiceConnection() {
     @Override
@@ -127,21 +131,21 @@ public class PinnipedeActivity extends FragmentActivity {
 
     setContentView(R.layout.main);
 
-    mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+    mTabHost = (TabHost) findViewById(android.R.id.tabhost);
     mTabHost.setup();
 
-    mViewPager = (ViewPager)findViewById(R.id.pager);
+    mViewPager = (ViewPager) findViewById(R.id.pager);
 
     mTabsAdapter = new TabsAdapter(this, mTabHost, mViewPager);
 
     for (String b : boards) {
       Bundle args = new Bundle();
       args.putString("board", b);
-      mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b),
-              BoardFragment.class, args);
+      mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
     }
     for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
-      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = 35;
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());//(int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
     }
 
     if (savedInstanceState != null) {
@@ -188,19 +192,13 @@ public class PinnipedeActivity extends FragmentActivity {
       }
     }
     for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
-      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
-    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
-      if (!boards.contains((String) ((TextView) mTabHost.getTabWidget().getChildTabViewAt(i).findViewById(android.R.id.title)).getText())) {
-        mTabHost.getTabWidget().removeView(mTabHost.getTabWidget().getChildTabViewAt(i));
+      View tab = mTabHost.getTabWidget().getChildAt(i);
+      tab.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());
+      tab.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
+      if (!boards.contains((String) ((TextView) tab.findViewById(android.R.id.title)).getText())) {
+        mTabsAdapter.removeTab(i);
       }
     }
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
   }
 
   @Override
@@ -351,7 +349,7 @@ public class PinnipedeActivity extends FragmentActivity {
 
   public static class TabsAdapter extends FragmentPagerAdapter
   implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener {
-    private final Context mContext;
+    private final Activity mActivity;
     private final TabHost mTabHost;
     private final ViewPager mViewPager;
     private final ArrayList<TabInfo> mTabs = new ArrayList<TabInfo>();
@@ -360,11 +358,20 @@ public class PinnipedeActivity extends FragmentActivity {
       private final String tag;
       private final Class<?> clss;
       private final Bundle args;
+      private BoardFragment board;
 
       TabInfo(String _tag, Class<?> _class, Bundle _args) {
         tag = _tag;
         clss = _class;
         args = _args;
+      }
+      
+      public void setBoard(BoardFragment board) {
+        this.board = board;
+      }
+      
+      public BoardFragment getBoard() {
+        return board;
       }
     }
 
@@ -386,7 +393,7 @@ public class PinnipedeActivity extends FragmentActivity {
 
     public TabsAdapter(FragmentActivity activity, TabHost tabHost, ViewPager pager) {
       super(activity.getSupportFragmentManager());
-      mContext = activity;
+      mActivity = activity;
       mTabHost = tabHost;
       mViewPager = pager;
       mTabHost.setOnTabChangedListener(this);
@@ -394,20 +401,29 @@ public class PinnipedeActivity extends FragmentActivity {
       mViewPager.setOnPageChangeListener(this);
     }
 
-    public void addTab(TabSpec tabSpec, Class<BoardFragment> board, Bundle args) {
-      tabSpec.setContent(new DummyTabFactory(mContext));
+    public void addTab(TabSpec tabSpec, Class<?> clss, Bundle args) {
+      tabSpec.setContent(new DummyTabFactory(mActivity));
       String tag = tabSpec.getTag();
 
-      TabInfo info = new TabInfo(tag, board, args);
+      TabInfo info = new TabInfo(tag, clss, args);
       mTabs.add(info);
       mTabHost.addTab(tabSpec);
+      notifyDataSetChanged();
+    }
+    
+    public void removeTab(int position) {
+      mTabHost.getTabWidget().removeView(mTabHost.getTabWidget().getChildTabViewAt(position));
+      mTabs.remove(position);
       notifyDataSetChanged();
     }
 
     @Override
     public Fragment getItem(int position) {
+      Log.d("TabsAdapter", "getItem() called for position: " + position);
       TabInfo info = mTabs.get(position);
-      return Fragment.instantiate(mContext, info.clss.getName(), info.args);
+      BoardFragment board = (BoardFragment) Fragment.instantiate(mActivity, info.clss.getName(), info.args);
+      info.setBoard(board);
+      return board;
     }
 
     @Override
@@ -440,7 +456,16 @@ public class PinnipedeActivity extends FragmentActivity {
     @Override
     public void onTabChanged(String tabId) {
       int position = mTabHost.getCurrentTab();
-      mViewPager.setCurrentItem(position);
+      BoardFragment board = mTabs.get(position).getBoard();
+      if (board != null) {
+        if (board.getLoaderManager().hasRunningLoaders()) {
+          Log.d("TabsAdapter", "Fragment state: " + (board.getLoaderManager().hasRunningLoaders() ? "running" : "ok"));
+        }
+      }
+      mViewPager.setCurrentItem(position, true);
+      HorizontalScrollView scroll = (HorizontalScrollView) mActivity.findViewById(R.id.tabs_scroll);
+      int x = (int) ((int) position * TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, mActivity.getResources().getDisplayMetrics()) / mTabs.size()); 
+      scroll.smoothScrollTo(x, 0);
     }
   }
 }
