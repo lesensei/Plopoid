@@ -37,6 +37,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.util.Log;
@@ -55,7 +56,7 @@ import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PinnipedeActivity extends FragmentActivity {
+public class PinnipedeActivity extends ActionBarActivity {
   SharedPreferences preferences;
   HttpContext httpContext;
   CookieStore cookieStore;
@@ -64,7 +65,7 @@ public class PinnipedeActivity extends FragmentActivity {
   TabsAdapter mTabsAdapter;
   Messenger updateMessenger = null;
   boolean messengerBound;
-  private final static int TAB_HEIGHT = 30;
+  private final static int TAB_HEIGHT = 48;
   private final static int TAB_WIDTH = 100;
   
   private ServiceConnection updateConn = new ServiceConnection() {
@@ -109,6 +110,7 @@ public class PinnipedeActivity extends FragmentActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    //LoaderManager.enableDebugLogging(true);
     httpContext = new BasicHttpContext();
     cookieStore = new BasicCookieStore();
     cookieStore.clearExpired(new Date());
@@ -227,6 +229,15 @@ public class PinnipedeActivity extends FragmentActivity {
         Intent optionsActivity = new Intent(this, OptionsActivity.class);
         startActivity(optionsActivity);
         return true;
+      case R.id.menu_refresh:
+        if (messengerBound) {
+          try {
+            updateMessenger.send(Message.obtain(null, PostsUpdateService.MSG_UPDATE_USER_REQUEST));
+          } catch (RemoteException e) {
+            Toast.makeText(this, "Failed to trigger update after post", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+          }
+        }
       default:
         return super.onOptionsItemSelected(item);
     }

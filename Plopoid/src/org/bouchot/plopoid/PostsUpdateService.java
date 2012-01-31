@@ -47,6 +47,7 @@ public class PostsUpdateService extends Service {
   PrefChangeListener prefsListener;
   private Messenger updateMessenger;
   public static final int MSG_UPDATE_AFTER_POST = 1;
+  public static final int MSG_UPDATE_USER_REQUEST = 2;
   
   private final class XmlPostsHandler implements ContentHandler {
     private final String BOARD_TAG    = "board";
