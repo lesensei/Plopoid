@@ -6,8 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,7 +26,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
+import android.preference.CheckBoxPreference;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Xml;
@@ -40,8 +38,8 @@ public class OptionsActivity extends PreferenceActivity {
   
   private class XmlBoardsHandler implements ContentHandler {
     private static final String SITE_TAG = "site";
-    private static final String NAME_ATTR = "name";
     private static final String COOKIE_TAG = "cookie";
+    private static final String NAME_ATTR = "name";
     
     private String board;
     private Editor prefsEdit;
@@ -68,7 +66,7 @@ public class OptionsActivity extends PreferenceActivity {
 
     @Override
     public void endDocument() throws SAXException {
-      prefsEdit.apply();
+      prefsEdit.commit();
     }
     
     @Override
@@ -87,7 +85,7 @@ public class OptionsActivity extends PreferenceActivity {
         board = attrs.getValue("", NAME_ATTR);
         PreferenceScreen boardScreen = getPreferenceManager().createPreferenceScreen(mActivity);
         boardScreen.setTitle(board);
-        SwitchPreference boardEnable = new SwitchPreference(mActivity);
+        CheckBoxPreference boardEnable = new CheckBoxPreference(mActivity);
         boardEnable.setKey(board + "_board_enabled");
         boardEnable.setTitle(R.string.board_checkbox);
         boardEnable.setPersistent(true);
@@ -95,7 +93,7 @@ public class OptionsActivity extends PreferenceActivity {
         boardEnable.setSummaryOn(R.string.board_enabled);
         boardEnable.setSummaryOff(R.string.board_disabled);
         boardScreen.addPreference(boardEnable);
-        SwitchPreference customLogin = new SwitchPreference(mActivity);
+        CheckBoxPreference customLogin = new CheckBoxPreference(mActivity);
         customLogin.setKey(board + "_custom_login");
         customLogin.setTitle(R.string.custom_login_title);
         customLogin.setPersistent(true);
@@ -122,9 +120,9 @@ public class OptionsActivity extends PreferenceActivity {
         boardScreen.addPreference(passwordPref);
         boardsPrefs.addPreference(boardScreen);
       } else if (mFirst && lName.equals(COOKIE_TAG)) {
-        Set<String> cookies = (Set<String>) getPreferenceManager().getSharedPreferences().getStringSet(board + "_login_cookie_name", new TreeSet<String>());
-        cookies.add(attrs.getValue("", NAME_ATTR));
-        prefsEdit.putStringSet(board + "_login_cookie_name", cookies);
+        String oldCookies = getPreferenceManager().getSharedPreferences().getString(board + "_login_cookie_name", "");
+        String newCookies = (oldCookies.equals("") ? "" : oldCookies + ";") + attrs.getValue("", NAME_ATTR);
+        prefsEdit.putString(board + "_login_cookie_name", newCookies);
       }
     }
 

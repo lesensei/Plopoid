@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.support.v4.widget.SimpleCursorAdapter.ViewBinder;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -14,7 +15,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.TextView;
-import android.widget.SimpleCursorAdapter.ViewBinder;
 
 public class PostsBinder implements ViewBinder {
   Activity mActivity;

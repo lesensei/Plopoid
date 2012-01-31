@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -21,11 +20,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
-import android.app.ActionBar.Tab;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -39,22 +34,38 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.TabHost;
+import android.widget.TabWidget;
+import android.widget.TabHost.TabSpec;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class PinnipedeActivity extends Activity {
+public class PinnipedeActivity extends FragmentActivity {
   SharedPreferences preferences;
   HttpContext httpContext;
   CookieStore cookieStore;
+  TabHost mTabHost;
+  ViewPager mViewPager;
+  TabsAdapter mTabsAdapter;
   Messenger updateMessenger = null;
   boolean messengerBound;
+  private final static int TAB_HEIGHT = 30;
+  private final static int TAB_WIDTH = 100;
   
   private ServiceConnection updateConn = new ServiceConnection() {
     @Override
@@ -115,28 +126,27 @@ public class PinnipedeActivity extends Activity {
       }
     }
 
-    final ActionBar bar = getActionBar();
-    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-    bar.setDisplayShowTitleEnabled(false);
-
-    for (String b : boards) {
-      bar.addTab(bar.newTab()
-          .setText(b)
-          .setTabListener(new TabListener<BoardFragment>(
-              this, b, BoardFragment.class)));
-    }
-
     setContentView(R.layout.main);
 
+    mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+    mTabHost.setup();
+
+    mViewPager = (ViewPager) findViewById(R.id.pager);
+
+    mTabsAdapter = new TabsAdapter(this, mTabHost, mViewPager);
+
+    for (String b : boards) {
+      Bundle args = new Bundle();
+      args.putString("board", b);
+      mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
+    }
+    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());//(int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
+      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
+    }
+
     if (savedInstanceState != null) {
-      String activeBoard = savedInstanceState.getString("tab");
-      if (activeBoard != null) {
-        for (int i = 0; i < bar.getNavigationItemCount(); i++) {
-          if (((String) bar.getTabAt(i).getText()).equals(activeBoard)) {
-            bar.setSelectedNavigationItem(i);
-          }
-        }
-      }
+      mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
     }
 
     Intent updatePosts = new Intent(this, PostsUpdateService.class);
@@ -160,52 +170,38 @@ public class PinnipedeActivity extends Activity {
       }
     }
 
-    final ActionBar bar = getActionBar();
-
     for (String b : boards) {
-      int after = -1;
       boolean addIt = true;
-      for (int i = 0; i < bar.getTabCount(); i++) {
-        Tab tab = bar.getTabAt(i);
-        String title = (String) tab.getText();
-        if (title.compareTo(b) < 0) {
-          after = i;
-        }
+      for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+        String title = (String) ((TextView) mTabHost.getTabWidget().getChildTabViewAt(i).findViewById(android.R.id.title)).getText();
         if (title != null && title.equals(b)) {
           addIt = false;
         }
       }
       if (addIt) {
-        bar.addTab(bar.newTab()
-            .setText(b)
-            .setTabListener(new TabListener<BoardFragment>(
-                this, b, BoardFragment.class)), after + 1);
+        Bundle args = new Bundle();
+        args.putString("board", b);
+        mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
       }
     }
-
-    for (int i = 0; i < bar.getTabCount(); i++) {
-      if (!boards.contains((String) bar.getTabAt(i).getText())) {
-        bar.removeTabAt(i);
+    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+      View tab = mTabHost.getTabWidget().getChildAt(i);
+      tab.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());
+      tab.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
+      if (!boards.contains((String) ((TextView) tab.findViewById(android.R.id.title)).getText())) {
+        mTabsAdapter.removeTab(i);
       }
     }
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
   }
 
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    Tab mTab =getActionBar().getSelectedTab(); 
-    if (mTab != null) {
-      outState.putString("tab", (String) mTab.getText());
-    }
+    outState.putString("tab", mTabHost.getCurrentTabTag());
   }
 
   public void palmipedePost(View v) {
-    CharSequence board = getActionBar().getSelectedTab().getText();
+    CharSequence board = mTabHost.getCurrentTabTag();
     Editable messageData = ((EditText) findViewById(R.id.palmipede)).getText();
     if (messageData.length() == 0) {
       return;
@@ -220,15 +216,8 @@ public class PinnipedeActivity extends Activity {
       username = preferences.getString("default_login", null);
       password = preferences.getString("default_password", null);
     }
-    Set<String> cookieNames = preferences.getStringSet(board + "_login_cookie_name", null);
-    StringBuffer cookies = new StringBuffer();
-    for (String cookie : cookieNames) {
-      if (cookies.length() > 0) {
-        cookies.append(';');
-      }
-      cookies.append(cookie);
-    }
-    new PostMessageTask(this, board.toString()).execute(message, username, password, cookies.toString());
+    String cookies = preferences.getString(board + "_login_cookie_name", "");
+    new PostMessageTask(this, board.toString()).execute(message, username, password, cookies);
   }
 
   @Override
@@ -248,54 +237,6 @@ public class PinnipedeActivity extends Activity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_menu, menu);
     return super.onCreateOptionsMenu(menu);
-  }
-
-  public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
-    private final Activity mActivity;
-    private final String mTag;
-    private final Class<T> mClass;
-    private final Bundle mArgs;
-    private Fragment mFragment;
-
-    public TabListener(Activity activity, String tag, Class<T> clz) {
-      this(activity, tag, clz, null);
-    }
-
-    public TabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
-      mActivity = activity;
-      mTag = tag;
-      mClass = clz;
-      mArgs = args;
-
-      // Check to see if we already have a fragment for this tab, probably
-      // from a previously saved state.  If so, deactivate it, because our
-      // initial state is that a tab isn't shown.
-      mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
-      if (mFragment != null && !mFragment.isDetached()) {
-        FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
-        ft.detach(mFragment);
-        ft.commit();
-      }
-    }
-
-    public void onTabSelected(Tab tab, FragmentTransaction ft) {
-      if (mFragment == null) {
-        mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
-        ft.add(R.id.pinni_container, mFragment, mTag);
-      } else {
-        ft.attach(mFragment);
-      }
-    }
-
-    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-      if (mFragment != null) {
-        ft.detach(mFragment);
-      }
-    }
-
-    public void onTabReselected(Tab tab, FragmentTransaction ft) {
-      //Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
-    }
   }
 
   private class PostMessageTask extends AsyncTask<String, Void, Boolean> {
@@ -398,5 +339,119 @@ public class PinnipedeActivity extends Activity {
       palmiBtn.setEnabled(true);
     }
   }
-  
+
+  public static class TabsAdapter extends FragmentPagerAdapter
+  implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener {
+    private final Activity mActivity;
+    private final TabHost mTabHost;
+    private final ViewPager mViewPager;
+    private final ArrayList<TabInfo> mTabs = new ArrayList<TabInfo>();
+
+    static final class TabInfo {
+      private final String tag;
+      private final Class<?> clss;
+      private final Bundle args;
+      private BoardFragment board;
+
+      TabInfo(String _tag, Class<?> _class, Bundle _args) {
+        tag = _tag;
+        clss = _class;
+        args = _args;
+      }
+      
+      public void setBoard(BoardFragment board) {
+        this.board = board;
+      }
+      
+      public BoardFragment getBoard() {
+        return board;
+      }
+    }
+
+    static class DummyTabFactory implements TabHost.TabContentFactory {
+      private final Context mContext;
+
+      public DummyTabFactory(Context context) {
+        mContext = context;
+      }
+
+      @Override
+      public View createTabContent(String tag) {
+        View v = new View(mContext);
+        v.setMinimumWidth(0);
+        v.setMinimumHeight(0);
+        return v;
+      }
+    }
+
+    public TabsAdapter(FragmentActivity activity, TabHost tabHost, ViewPager pager) {
+      super(activity.getSupportFragmentManager());
+      mActivity = activity;
+      mTabHost = tabHost;
+      mViewPager = pager;
+      mTabHost.setOnTabChangedListener(this);
+      mViewPager.setAdapter(this);
+      mViewPager.setOnPageChangeListener(this);
+    }
+
+    public void addTab(TabSpec tabSpec, Class<?> clss, Bundle args) {
+      tabSpec.setContent(new DummyTabFactory(mActivity));
+      String tag = tabSpec.getTag();
+
+      TabInfo info = new TabInfo(tag, clss, args);
+      mTabs.add(info);
+      mTabHost.addTab(tabSpec);
+      notifyDataSetChanged();
+    }
+    
+    public void removeTab(int position) {
+      mTabHost.getTabWidget().removeView(mTabHost.getTabWidget().getChildTabViewAt(position));
+      mTabs.remove(position);
+      notifyDataSetChanged();
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+      TabInfo info = mTabs.get(position);
+      BoardFragment board = (BoardFragment) Fragment.instantiate(mActivity, info.clss.getName(), info.args);
+      info.setBoard(board);
+      return board;
+    }
+
+    @Override
+    public int getCount() {
+      return mTabs.size();
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+      // Unfortunately when TabHost changes the current tab, it kindly
+      // also takes care of putting focus on it when not in touch mode.
+      // The jerk.
+      // This hack tries to prevent this from pulling focus out of our
+      // ViewPager.
+      TabWidget widget = mTabHost.getTabWidget();
+      int oldFocusability = widget.getDescendantFocusability();
+      widget.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+      mTabHost.setCurrentTab(position);
+      widget.setDescendantFocusability(oldFocusability);
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+      int position = mTabHost.getCurrentTab();
+      mViewPager.setCurrentItem(position, true);
+      HorizontalScrollView scroll = (HorizontalScrollView) mActivity.findViewById(R.id.tabs_scroll);
+      int x = (int) ((int) position * TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, mActivity.getResources().getDisplayMetrics()) / mTabs.size()); 
+      scroll.smoothScrollTo(x, 0);
+    }
+  }
 }

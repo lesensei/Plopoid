@@ -30,6 +30,6 @@
     <string name="olccs_base_uri_default">http://zorel.org/b/</string>
     <string name="user_agent_title">UA string</string>
     <string name="user_agent_summary">User-agent string (seen by web servers)</string>
-    <string name="user_agent_default">Plopoid/0.1</string>
+    <string name="user_agent_default">Plopoid/0.2</string>
 
 </resources>
