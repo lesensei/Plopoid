@@ -6,8 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

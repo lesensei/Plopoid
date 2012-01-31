@@ -95,9 +95,8 @@ public class PostsUpdateService extends Service {
         lastId = c.getLong(0) - 150;
       }
       String[] args = { board, "" + lastId };
-      int deleted = getContentResolver().delete(PostsProvider.Posts.CONTENT_URI, PostsProvider.Posts.COLUMN_NAME_BOARD + " = ? AND " + PostsProvider.Posts.COLUMN_NAME_ID + " < ?", args);
+      getContentResolver().delete(PostsProvider.Posts.CONTENT_URI, PostsProvider.Posts.COLUMN_NAME_BOARD + " = ? AND " + PostsProvider.Posts.COLUMN_NAME_ID + " < ?", args);
       c.close();
-      Log.d("PostsUpdateService", deleted + " posts deleted for board " + data.getAsString("board"));
       return;
     }
 
@@ -129,7 +128,6 @@ public class PostsUpdateService extends Service {
           data.put("id", new Long(attrs.getValue("", ID_ATTR)));
         } catch (NumberFormatException nfe) {
           Toast.makeText(getApplicationContext(), "Invalid data (NaN id) received for board"+ board, Toast.LENGTH_SHORT).show();
-          Log.e("XmlPostsHandler", "Invalid id data, unable to fully parse post");
         }
         data.put("time", attrs.getValue("", TIME_ATTR));
       } else if (curTag.equals(BOARD_TAG)) {
@@ -209,9 +207,7 @@ public class PostsUpdateService extends Service {
             params.add(new BasicNameValuePair("query", "id:[" + lastId + " TO *]"));
             String paramString = URLEncodedUtils.format(params, "utf-8");
             String url = preferences.getString("olccs_base_uri", getString(R.string.olccs_base_uri_default)) + board + "/search?" + paramString;
-            Log.d("PostsUpdateMessageHandler", url);
             HttpResponse res = httpClient.execute(new HttpGet(url));
-            Log.d("PostsUpdateMessageHandler", "Taille des données reçues: " + res.getEntity().getContentLength());
             if (res.getStatusLine().getStatusCode() >= 300) {
               throw new IOException("Got HTTP response " + res.getStatusLine().toString() + " for URL " + url);
             }
@@ -241,7 +237,6 @@ public class PostsUpdateService extends Service {
           delay = 3000;
         } else {
           delay = Math.min(delay + 3000, 60000);
-          Log.d("PostsUpdateMessageHandler", "Delay increased to " + delay + "ms");
         }
         Message newMsg = this.obtainMessage();
         newMsg.arg1 = msg.arg1;
@@ -260,7 +255,6 @@ public class PostsUpdateService extends Service {
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPrefs, String key) {
-      Log.d("PrefChangeListener", "Preference " + key + " change registered by the service");
       if (key.contains("_board_enabled")) {
         String b = key.substring(0, key.indexOf("_board_enabled"));
         if (sharedPrefs.getBoolean(key, false)) {

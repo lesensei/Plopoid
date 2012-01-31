@@ -7,13 +7,11 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
@@ -38,7 +36,6 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
@@ -174,13 +171,9 @@ public class PinnipedeActivity extends FragmentActivity {
     }
 
     for (String b : boards) {
-      int after = -1;
       boolean addIt = true;
       for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
         String title = (String) ((TextView) mTabHost.getTabWidget().getChildTabViewAt(i).findViewById(android.R.id.title)).getText();
-        if (title.compareTo(b) < 0) {
-          after = i;
-        }
         if (title != null && title.equals(b)) {
           addIt = false;
         }
@@ -419,7 +412,6 @@ public class PinnipedeActivity extends FragmentActivity {
 
     @Override
     public Fragment getItem(int position) {
-      Log.d("TabsAdapter", "getItem() called for position: " + position);
       TabInfo info = mTabs.get(position);
       BoardFragment board = (BoardFragment) Fragment.instantiate(mActivity, info.clss.getName(), info.args);
       info.setBoard(board);
@@ -432,7 +424,7 @@ public class PinnipedeActivity extends FragmentActivity {
     }
 
     @Override
-    public void onPageScrollStateChanged(int position) {
+    public void onPageScrollStateChanged(int state) {
     }
 
     @Override
@@ -456,12 +448,6 @@ public class PinnipedeActivity extends FragmentActivity {
     @Override
     public void onTabChanged(String tabId) {
       int position = mTabHost.getCurrentTab();
-      BoardFragment board = mTabs.get(position).getBoard();
-      if (board != null) {
-        if (board.getLoaderManager().hasRunningLoaders()) {
-          Log.d("TabsAdapter", "Fragment state: " + (board.getLoaderManager().hasRunningLoaders() ? "running" : "ok"));
-        }
-      }
       mViewPager.setCurrentItem(position, true);
       HorizontalScrollView scroll = (HorizontalScrollView) mActivity.findViewById(R.id.tabs_scroll);
       int x = (int) ((int) position * TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, mActivity.getResources().getDisplayMetrics()) / mTabs.size()); 
