@@ -21,9 +21,11 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.http.AndroidHttpClient;
@@ -64,9 +66,10 @@ public class PinnipedeActivity extends ActionBarActivity {
   ViewPager mViewPager;
   TabsAdapter mTabsAdapter;
   Messenger updateMessenger = null;
+  PostsUpdateServiceReceiver mPostsUpdateServiceReceiver;
   boolean messengerBound;
-  private final static int TAB_HEIGHT = 48;
-  private final static int TAB_WIDTH = 100;
+  /*private final static int TAB_HEIGHT = 48;
+  private final static int TAB_WIDTH = 100;*/
   
   private ServiceConnection updateConn = new ServiceConnection() {
     @Override
@@ -127,6 +130,8 @@ public class PinnipedeActivity extends ActionBarActivity {
         }
       }
     }
+    
+    mPostsUpdateServiceReceiver = new PostsUpdateServiceReceiver();
 
     setContentView(R.layout.main);
 
@@ -142,10 +147,10 @@ public class PinnipedeActivity extends ActionBarActivity {
       args.putString("board", b);
       mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
     }
-    for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+    /*for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
       mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());//(int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
       mTabHost.getTabWidget().getChildAt(i).getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
-    }
+    }*/
 
     if (savedInstanceState != null) {
       mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
@@ -159,6 +164,10 @@ public class PinnipedeActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    
+    IntentFilter mIntentFilter = new IntentFilter();
+    mIntentFilter.addAction(PostsUpdateService.BACKEND_UPDATE);
+    registerReceiver(mPostsUpdateServiceReceiver, mIntentFilter);
 
     ArrayList<String> boards = new ArrayList<String>();
     preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -188,12 +197,18 @@ public class PinnipedeActivity extends ActionBarActivity {
     }
     for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
       View tab = mTabHost.getTabWidget().getChildAt(i);
-      tab.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());
-      tab.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
+      /*tab.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());
+      tab.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());*/
       if (!boards.contains((String) ((TextView) tab.findViewById(android.R.id.title)).getText())) {
         mTabsAdapter.removeTab(i);
       }
     }
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    unregisterReceiver(mPostsUpdateServiceReceiver);
   }
 
   @Override
@@ -248,6 +263,13 @@ public class PinnipedeActivity extends ActionBarActivity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_menu, menu);
     return super.onCreateOptionsMenu(menu);
+  }
+
+  private class PostsUpdateServiceReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      getActionBarHelper().setRefreshActionItemState(intent.getBooleanExtra(PostsUpdateService.BACKEND_UPDATE_RUNNING, false));
+    }
   }
 
   private class PostMessageTask extends AsyncTask<String, Void, Boolean> {
@@ -460,9 +482,14 @@ public class PinnipedeActivity extends ActionBarActivity {
     public void onTabChanged(String tabId) {
       int position = mTabHost.getCurrentTab();
       mViewPager.setCurrentItem(position, true);
-      HorizontalScrollView scroll = (HorizontalScrollView) mActivity.findViewById(R.id.tabs_scroll);
-      int x = (int) ((int) position * TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, mActivity.getResources().getDisplayMetrics()) / mTabs.size()); 
-      scroll.smoothScrollTo(x, 0);
+      int count = mTabHost.getTabWidget().getTabCount(); 
+      if (count > 0) {
+        int left = mTabHost.getTabWidget().getChildTabViewAt(mTabHost.getCurrentTab()).getLeft();
+        int width = mTabHost.getTabWidget().getChildTabViewAt(mTabHost.getCurrentTab()).getWidth();
+        int offset = (count - position) * width / count;
+        HorizontalScrollView scroll = (HorizontalScrollView) mActivity.findViewById(R.id.tabs_scroll);
+        scroll.smoothScrollTo(scroll.getMaxScrollAmount() - (scroll.getMaxScrollAmount() - left) - offset, 0);
+      }
     }
   }
 }

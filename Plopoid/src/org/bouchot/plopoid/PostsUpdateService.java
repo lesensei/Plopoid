@@ -48,6 +48,10 @@ public class PostsUpdateService extends Service {
   private Messenger updateMessenger;
   public static final int MSG_UPDATE_AFTER_POST = 1;
   public static final int MSG_UPDATE_USER_REQUEST = 2;
+  public static final int MSG_UPDATE_AUTO = 3;
+  public static final int MSG_UPDATE_PREF_CHANGE = 4;
+  public static final String BACKEND_UPDATE = "org.bouchot.plopoid.PostsUpdateService.action.BACKEND_UPDATE";
+  public static final String BACKEND_UPDATE_RUNNING = "org.bouchot.plopoid.PostsUpdateService.BACKEND_UPDATE_RUNNING";
   
   private final class XmlPostsHandler implements ContentHandler {
     private final String BOARD_TAG    = "board";
@@ -187,13 +191,23 @@ public class PostsUpdateService extends Service {
     
     @Override
     public void handleMessage(Message msg) {
+      Intent intent = new Intent(BACKEND_UPDATE);
+      intent.putExtra(BACKEND_UPDATE_RUNNING, true);
+      sendBroadcast(intent);
+      
       boolean hadNewPosts = false;
       
-      int count = boards.size();
+      // Copy the ArrayList to avoid surprises due to concurrent modifications
+      // We don't need to synchronize or anything here, as that would induce delays
+      // and we don't really care if we load something that wasn't really due. 
+      @SuppressWarnings("unchecked")
+      ArrayList<String> boardsCopy = (ArrayList<String>) boards.clone();
+      
+      int count = boardsCopy.size();
       AndroidHttpClient httpClient = AndroidHttpClient.newInstance(preferences.getString("user_agent", getString(R.string.user_agent_default)));
       try {
         for (int i = 0; i < count; i++) {
-          String board = boards.get(i);
+          String board = boardsCopy.get(i);
           Uri lastIdUri = Uri.withAppendedPath(PostsProvider.Posts.CONTENT_LASTID_URI_BASE, board);
           String[] columns = {PostsProvider.Posts.COLUMN_NAME_ID};
           Cursor c = getContentResolver().query(lastIdUri, columns, null, null, null);
@@ -233,19 +247,26 @@ public class PostsUpdateService extends Service {
         httpClient.close();
       }
       
-      if (msg.what != MSG_UPDATE_AFTER_POST) {
+      if (msg.what == MSG_UPDATE_AUTO || msg.what == MSG_UPDATE_USER_REQUEST) {
         if (hadNewPosts) {
           delay = 3000;
         } else {
           delay = Math.min(delay + 3000, 60000);
         }
+      }
+      if (msg.what == MSG_UPDATE_AUTO) {
         Message newMsg = this.obtainMessage();
         newMsg.arg1 = msg.arg1;
+        newMsg.what = msg.what;
         newMsg.obj = boards;
         if (!destroyCalled) {
           this.sendMessageDelayed(newMsg, delay);
+        }
       }
-      }
+
+      intent = new Intent(BACKEND_UPDATE);
+      intent.putExtra(BACKEND_UPDATE_RUNNING, false);
+      sendBroadcast(intent);
     }
   }
   
@@ -256,17 +277,24 @@ public class PostsUpdateService extends Service {
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPrefs, String key) {
+      boolean boardAdded = false;
       if (key.contains("_board_enabled")) {
         String b = key.substring(0, key.indexOf("_board_enabled"));
         if (sharedPrefs.getBoolean(key, false)) {
           if (!boards.contains(b)) {
             boards.add(b);
+            boardAdded = true;
           }
         } else {
           if (boards.contains(b)) {
             boards.remove(b);
           }
         }
+      }
+      if (boardAdded) {
+        Message msg = mServiceHandler.obtainMessage();
+        msg.what = MSG_UPDATE_PREF_CHANGE;
+        mServiceHandler.sendMessage(msg);
       }
     }
   }
@@ -299,6 +327,7 @@ public class PostsUpdateService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
     Message msg = mServiceHandler.obtainMessage();
     msg.arg1 = startId;
+    msg.what = MSG_UPDATE_AUTO;
     mServiceHandler.sendMessage(msg);
 
     return START_STICKY;
@@ -313,5 +342,15 @@ public class PostsUpdateService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     return updateMessenger.getBinder();
+  }
+
+  @Override
+  public void onRebind(Intent intent) {
+    
+  }
+
+  @Override
+  public boolean onUnbind(Intent intent) {
+    return super.onUnbind(intent);
   }
 }
