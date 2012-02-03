@@ -39,11 +39,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -68,8 +66,6 @@ public class PinnipedeActivity extends ActionBarActivity {
   Messenger updateMessenger = null;
   PostsUpdateServiceReceiver mPostsUpdateServiceReceiver;
   boolean messengerBound;
-  /*private final static int TAB_HEIGHT = 48;
-  private final static int TAB_WIDTH = 100;*/
   
   private ServiceConnection updateConn = new ServiceConnection() {
     @Override
@@ -147,10 +143,6 @@ public class PinnipedeActivity extends ActionBarActivity {
       args.putString("board", b);
       mTabsAdapter.addTab(mTabHost.newTabSpec(b).setIndicator(b), BoardFragment.class, args);
     }
-    /*for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
-      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());//(int) (35.0f * getResources().getDisplayMetrics().density + 0.5f);
-      mTabHost.getTabWidget().getChildAt(i).getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());
-    }*/
 
     if (savedInstanceState != null) {
       mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
@@ -197,8 +189,6 @@ public class PinnipedeActivity extends ActionBarActivity {
     }
     for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
       View tab = mTabHost.getTabWidget().getChildAt(i);
-      /*tab.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_HEIGHT, getResources().getDisplayMetrics());
-      tab.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TAB_WIDTH, getResources().getDisplayMetrics());*/
       if (!boards.contains((String) ((TextView) tab.findViewById(android.R.id.title)).getText())) {
         mTabsAdapter.removeTab(i);
       }
