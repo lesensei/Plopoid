@@ -21,7 +21,7 @@ import android.util.Log;
 public class PostsProvider extends ContentProvider {
   private static final String TAG = "PostsProvider";
   private static final String DATABASE_NAME = "posts.db";
-  private static final int DATABASE_VERSION = 2;
+  private static final int DATABASE_VERSION = 3;
   private static HashMap<String, String> mPostsProjectionMap;
 
   /*
@@ -91,7 +91,8 @@ public class PostsProvider extends ContentProvider {
           + Posts.COLUMN_NAME_TIME + " TEXT,"
           + Posts.COLUMN_NAME_INFO + " TEXT,"
           + Posts.COLUMN_NAME_LOGIN + " TEXT,"
-          + Posts.COLUMN_NAME_MESSAGE + " TEXT"
+          + Posts.COLUMN_NAME_MESSAGE + " TEXT,"
+          + "UNIQUE(" + Posts.COLUMN_NAME_BOARD + "," + Posts.COLUMN_NAME_ID + ")"
           + ");");
     }
 
