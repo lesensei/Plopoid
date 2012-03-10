@@ -7,7 +7,7 @@
     android:clickable="false"
     android:divider="#00000000"
     android:dividerHeight="0dp"
-    android:transcriptMode="alwaysScroll" >
+    android:transcriptMode="normal" >
 
     <!-- Preview: listitem=@android:layout/simple_list_item_1 -->
 
