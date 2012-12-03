@@ -1,18 +1,20 @@
 package org.bouchot.plopoid;
 
+import com.actionbarsherlock.app.SherlockListFragment;
+
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class BoardFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class BoardFragment extends SherlockListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
   String board;
   SimpleCursorAdapter sca;
   
@@ -48,7 +50,8 @@ public class BoardFragment extends ListFragment implements LoaderManager.LoaderC
 
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    return new CursorLoader(getActivity(), PostsProvider.Posts.CONTENT_URI, null, "board = '" + this.board + "'", null, null);
+    String[] whereArgs = { this.board };
+    return new CursorLoader(getActivity(), PostsProvider.Posts.CONTENT_URI, null, "board = ?", whereArgs, null);
   }
 
   @Override

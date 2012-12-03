@@ -1,41 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.bouchot.plopoid"
-    android:versionCode="2"
-    android:versionName="0.2" >
+    android:versionCode="3"
+    android:versionName="0.3" >
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="15" />
-
-    <uses-permission android:name="android.permission.INTERNET" />
+        android:targetSdkVersion="16" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
+        android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="Plopoid"
-        android:theme="@style/AppTheme" >
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Sherlock" >
         <activity
-            android:name="PinnipedeActivity"
-            android:label="@string/app_name" >
+            android:name="org.bouchot.plopoid.CoinCoinActivity"
+            android:label="@string/app_name" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <data android:scheme="coincoin" android:pathPattern="*"/>
+            </intent-filter>
         </activity>
-
-        <provider
-            android:name="PostsProvider"
-            android:authorities="org.bouchot.plopoid.postsprovider" >
-        </provider>
-
-        <service android:name="PostsUpdateService" >
-        </service>
-
-        <activity android:name="OptionsActivity" >
-        </activity>
-
-        <receiver android:name="org.bouchot.plopoid.PinnipedeActivity.PostsUpdateServiceReceiver" />
+        <provider android:name="PostsProvider" android:authorities="org.bouchot.plopoid.postsprovider"></provider>
+        <activity android:name="OptionsActivity"></activity>
+        <receiver android:name="CoinCoinActivity$PostsUpdateServiceReceiver"></receiver>
+        <service android:name="PostsUpdateService"></service>
     </application>
 
 </manifest>

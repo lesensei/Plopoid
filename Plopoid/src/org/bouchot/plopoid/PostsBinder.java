@@ -13,7 +13,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.inputmethod.InputMethodManager;
 import android.view.View;
-import android.view.ViewParent;
 import android.widget.TextView;
 
 public class PostsBinder implements ViewBinder {
@@ -26,10 +25,6 @@ public class PostsBinder implements ViewBinder {
   private class ClockClicListener implements View.OnClickListener {
     @Override
     public void onClick(View v) {
-      ViewParent vp = v.getParent();
-      while (vp.getParent() != null) {
-        vp = vp.getParent();
-      }
       TextView palmi = (TextView) mActivity.findViewById(R.id.palmipede);
       if (!TextUtils.isEmpty(palmi.getText())) {
         palmi.append(" ");

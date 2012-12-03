@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="hello">Hello World, PinnipedeActivity!</string>
     <string name="app_name">Plopoid</string>
     <string name="post_button">OK</string>
@@ -27,10 +26,11 @@
     <string name="custom_password_summary">This password will be used by this board</string>
     <string name="olccs_base_uri_title">OLCCS base URI</string>
     <string name="olccs_base_uri_summary">Base URL at which OLCCS is listening</string>
-    <string name="olccs_base_uri_default">http://zorel.org/b/</string>
+    <string name="olccs_base_uri_default">https://logicielslibres.info/</string>
     <string name="user_agent_title">UA string</string>
     <string name="user_agent_summary">User-agent string (seen by web servers)</string>
     <string name="user_agent_default">Plopoid/0.2</string>
     <string name="refresh_title">Refresh</string>
-
+    <string name="bigornophone">Bigornophone</string>
+    <string name="bigo_detail">"You've been invoked on board %1$s by %2$s."</string>
 </resources>
