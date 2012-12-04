@@ -354,7 +354,7 @@ public class PostsProvider extends ContentProvider {
           if (inserter.insert(values) >= 0) {
             inserted++;
           } else {
-            throw new SQLException("Failed to insert row into " + uri);
+            throw new SQLException("Failed to insert row (" + v.toString() + ") into " + uri);
           }
         }
       }

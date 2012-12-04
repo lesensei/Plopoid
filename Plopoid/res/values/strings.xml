@@ -29,7 +29,7 @@
     <string name="olccs_base_uri_default">https://logicielslibres.info/</string>
     <string name="user_agent_title">UA string</string>
     <string name="user_agent_summary">User-agent string (seen by web servers)</string>
-    <string name="user_agent_default">Plopoid/0.2</string>
+    <string name="user_agent_default">Plopoid/0.3</string>
     <string name="refresh_title">Refresh</string>
     <string name="bigornophone">Bigornophone</string>
     <string name="bigo_detail">"You've been invoked on board %1$s by %2$s."</string>

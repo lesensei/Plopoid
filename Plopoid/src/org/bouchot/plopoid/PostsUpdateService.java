@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Handler;
@@ -293,6 +294,10 @@ public class PostsUpdateService extends Service {
     @Override
     public void handleMessage(Message msg) {
       PostsUpdateService mService = mServiceRef.get();
+      //If our reference is null, the service has been destroyed for whatever reason and we should get outta here...
+      if (mService == null) {
+        return;
+      }
       // Notify the UI thread that we are running, so that the user knows, too.
       Intent intent = new Intent(BACKEND_UPDATE);
       intent.putExtra(BACKEND_UPDATE_RUNNING, true);
@@ -340,7 +345,9 @@ public class PostsUpdateService extends Service {
           } catch (IOException e) {
             Log.e("PostsUpdateMessageHandler", "Unable to fetch data for board " + board, e);
           } catch (SAXException e) {
-            Log.e("PostsUpdateMessageHandler", "Unable to parse XML content returned by server for board " + board);
+            Log.e("PostsUpdateMessageHandler", "Unable to parse XML content returned by server for board " + board, e);
+          } catch (SQLException e) {
+            Log.e("PostsUpdateMessageHandler", "SQL Exception occured", e);
           }
           
           // If the lastId has been modified, we have new content.
@@ -348,8 +355,7 @@ public class PostsUpdateService extends Service {
             hadNewPosts = true;
         }
       } catch (Exception e) {
-        Log.e("PostsUpdateMessageHandler", "Unhandled error " + e.getMessage());
-        e.printStackTrace();
+        Log.e("PostsUpdateMessageHandler", "Unhandled error", e);
       } finally {
         httpClient.close();
       }
