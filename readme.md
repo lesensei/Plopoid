@@ -18,7 +18,7 @@ Voir la [liste des bugs](https://github.com/lesensei/Plopoid/issues). Vous pouve
 
 Plopoid exécute toutes ses requêtes sur un serveur olccs.
 
-On notera que la récupération des posts se fait dans un service, ce qui a peu de valeur ajoutée actuellement (et donc on aura tendance à stopper le service à la sortie), mais qui permettra plus tard d'avoir un bigorno-like.
+On notera que la récupération des posts se fait dans un service, ce qui permet aux gens qui veulent gâcher leur forfait data de bénéficier d'un bigornophone (fort primitif, pour le moment). Il faut pour cela activer l'option "sticky service" dans la conf.
 
 ## Alors oui, justement, c'est quoi les futures étapes
 
@@ -28,10 +28,10 @@ Ensuite, et pas dans l'ordre:
 
 * Possibilité de poster en anonyme
 * Une vraie gestion des horloges
-* Les notifications (bigornophone)
+* Un bigornophone amélioré (ouverture de la tribune invocatrice, onglet qui clignote quand l'appli est ouverte, etc.)
 * La colorisation des posts (de l'utilisateur, des réponses à l'utilisateur, etc.)
 * Une traduction des quelques bouts de texte, puisque c'est avant tout une appli pour francophones (mais je voulais tester l'internationalisation sur Android)
 
 ## Ça se chope où ?
 
-Pas sur le market en tout cas. Il y a une [page de téléchargement](https://github.com/lesensei/Plopoid/wiki/Download) sur le wiki, pour les glandeurs qui veulent pas compiler (et donc pas contribuer, hein, bande de profiteurs !)
+Pas sur le market en tout cas. Il y a une [page de téléchargement](https://github.com/lesensei/Plopoid/downloads) sur github, pour les glandeurs qui veulent pas compiler (et donc pas contribuer, hein, bande de profiteurs !)
